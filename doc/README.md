@@ -207,7 +207,8 @@ In a shortcut:
 ua_bytes = address_1 || ... || address_n
 address = typecode || length || key
 length = uint8
-typecode = 0x01 # for transparent
+typecode = 0x00 # for transparent P2PKH
+           0x01 # for transparent P2SH
            0x02 # for Sapling
            0x03 # for Orchard 
 
