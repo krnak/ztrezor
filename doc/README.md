@@ -342,19 +342,19 @@ Zcash privacy guarantees are for example:
  
 ## Simplified protocol
 
-TODO: update image
+![protocol](simple.png)
 
 1. User specifies transaction outputs.  
 2. Host selects appropriate inputs from his database and he sets a transaction fee.
 3. Host and Trezor communicate transparent inputs and outputs as in bitcoin.
 4. for every Action
-    - Host send Action plain data
-    - Trezor let user to verify output data on the screen
-    - Trezor shields Action
-    - Trezor sends back Action shielded data and used randomizers
+    - 4.1. Host send Action plain data
+    - 4.2. Trezor let user to verify output data on the screen
+    - 4.3. Trezor shields Action
+    - 4.4. Trezor sends back Action shielded data and used randomizers
 5. Trezor authorizes transactions by authorizing signatures and a binding signature.  
 6. Host computes zk-proof of transaction integrity.  
-7. Host sends transaction to a full node.
+7. Host sends the transaction into network.
 
 TODO: Have signatures to be streamed?
 
