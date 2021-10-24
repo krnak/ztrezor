@@ -191,7 +191,7 @@ def gen_diversified_address(j, dk, ivk):
 
 ## Unified addresses
 
-TODO: uaddr QR code image
+![unified address infographic](ua_qr.png)
 
 Unified addresses are one of NU5 features. They enable a user to share his transaparent and shielded payment addresses in one standardized bundle. UAs are well described in [ZIP 316](https://github.com/zcash/zips/blob/main/zip-0316.rst).
 
@@ -218,6 +218,8 @@ unified_address = "u" || Bech32m(ua_encoded)
 ```
 
 where `F4Jumble` is an unkeyed 4-round Feistel construction to approximate a random permutation described in [ZIP 316](https://github.com/zcash/zips/blob/main/zip-0316.rst). This function make it computationally impossible to generate two lexicographicly close addresses. Therefore it should be sufficient to check only first 16 bytes when spending to UA (**not confirmed, just my reasoning**).
+
+TODO: autoshielding feature
   
 ## Sending (output) Notes  
 
@@ -252,8 +254,6 @@ rk = alpha*G + ak
 `rk` and `nf` could be computed by the Host.
 
 On the otherside, computing `nf` and `rk` in the Trezor raises the implementation security and it simplifies the protocol. Hence we will compute the nullifier in the Trezor, if no fundamental barier appears.
-
-[](If the `nf` was not computed in the Trezor, its integrity cannot be checked. Therefore user cannot control which of his Notes was spent. But since `cv` and `cm` were computed in the Trezor, user controls the value of the input Note of an Action. If a nullifier of a Note with a different value was sent by the Host, then the zk-proof must be invalid. (`cm` binds the Action to output `v_new` ZEC and `cv` binds the Action to add exactly `v_old - v_new` ZEC to a shielded transaction pool. Though `cm` and `cv` together bind the Action to has `c_old` ZEC on input). To sum it up, once the `cv` and `cm` were computed in the Trezor, then the only new freedom of the Host, who controls the nullifier, is to choose, which of user's Notes with value exactly `v_old` ZEC is spent as an Action input. Since the transaction inputs were selected by the Host anyway, the Host has this freedom anyway.)
 
 ## Orchard Actions  
 
