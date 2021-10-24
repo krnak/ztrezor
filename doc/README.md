@@ -43,13 +43,13 @@ Sections
 
 describe transaction fields and they are copy-pasted from the Zcash documentation.
 
-Sections
+Document ends with standalone Sections:
 
-- [`trezor-firmware` implementation](#trezor-firmware-implementation) and
+- [Comparison with the Ledger](#comparison-with-the-ledger)
+- [Data flow](#data-flow) (no finished)
+- [`trezor-firmware` implementation](#trezor-firmware-implementation)
 - [`trezorlib` implementation](#trezorlib-implementation)
 
-capture some notes on details of our implementation.
- 
 ## Shielded transactions  
  
 Zcash is designed as an extension of bitcoin, however it is an independent cryptocurrency. It enables to hide a transaction graph to enhance the user's privacy.  
