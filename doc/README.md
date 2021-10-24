@@ -47,6 +47,7 @@ Document ends with standalone Sections:
 
 - [Comparison with the Ledger](#comparison-with-the-ledger)
 - [Data flow](#data-flow) (not finished)
+- [Delayed shielding](#delayed-shielding)
 - [`trezor-firmware` implementation](#trezor-firmware-implementation)
 - [`trezorlib` implementation](#trezorlib-implementation)
 
@@ -410,19 +411,7 @@ Detailed protocol:
 15. (Optionally) Host requests randomness for proof generation.
     - Trezor responds with 9 Pallas scalars.
 16. Host authorizes the transaction by zk-`proof`.  
-17. Host sends the authorized transaction to a full node.  
-
-## Delayed shielding
-
-If the Action shielding will be slow, then we can delay the shielding as follows:
-
-Phase 1: Host streams Actions. User confirms outputs on the screen. Trezor computes only a hash of streamed data sequentially.
-
-Phase 2: Host restreams all Actions. Trezor shields Actions without user's confirmation and it computes a hash of streamed data sequentially.
-
-In the end, Trezor checks that the hash from Phase 1 equals the hash from the Phase 2.
-
-This method will increase the complexity of the communication protocol, but user won't have to wait between confirmations of individual shielded outputs.   
+17. Host sends the authorized transaction to a full node.   
  
 ## Transaction fields
 
@@ -489,6 +478,19 @@ source: [ZIP 225](https://zips.z.cash/zip-0225)
 ## Data flow
 
 ![shielding data flow](shielding_flow.png)
+
+
+## Delayed shielding
+
+If the Action shielding will be slow, then we can delay the shielding as follows:
+
+Phase 1: Host streams Actions. User confirms outputs on the screen. Trezor computes only a hash of streamed data sequentially.
+
+Phase 2: Host restreams all Actions. Trezor shields Actions without user's confirmation and it computes a hash of streamed data sequentially.
+
+In the end, Trezor checks that the hash from Phase 1 equals the hash from the Phase 2.
+
+This method will increase the complexity of the communication protocol, but user won't have to wait between confirmations of individual shielded outputs.  
 
 ## `trezor-firmware` implementation
 
