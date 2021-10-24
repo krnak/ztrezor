@@ -2,7 +2,7 @@
   
 ## Introduction  
   
-The goal of this document is to explain, how Zcash Orchard shielded transactions are implemented in Trezor.
+The goal of this document is to explain how Zcash Orchard shielded transactions are implemented in Trezor.
 
 ## Notation
 
@@ -338,7 +338,7 @@ Structs:
 fvk  = (ak, nk, rivk)  
 addr = (d,pk_d)  
 input_note_plain = (addr,v,cm,nf_old)  
-output_note_plain = (addr,v,memo,ovk_flag)  
+output_note_plain = (addr,v,memo,enable_C_out)  
 action_plain = (input_note_plain, output_note_plain)  
 action_shielded = (rk, nf_new, cv, cm*, epk, C_enc, C_out)   
 randomizers = (alpha,rcv,rseed)
@@ -362,7 +362,7 @@ Detailed protocol:
 		- Note's receiver address `addr`  
 		- Note's value `v`  
 		- Note's `memo` ("None" in case of empty memo)  
-		- Note's `ovk_flag`  
+		- Note's `enable_C_out`  
 	- Trezor updates `v_net += v_old - v_new`
 	- Trezor generates a random 32 byte sequence  `rseed` 
 	- Trezor generates a random Pallas scalars `alpha` and `rcv`     
@@ -379,7 +379,6 @@ Detailed protocol:
 	- Trezor authorizes the transaction by spend authorizing signatures `spendAuthSig[]`.  
 	- Trezor authorizes the transaction by binding signature `bindingSig`. 
 	- Trezor responds by `(tSig[],spendAuthSig[],bindingSig)`.
-
 14. Host requests `fvk`.
 15. (Optionally) Host requests randomness for proof generation.
 	- Trezor responds by 9 Pallas scalars. 
@@ -463,48 +462,21 @@ source: [ZIP 225](https://zips.z.cash/zip-0225)
 
 ![shielding data flow](shielding_flow.png)
 
-[](
-Functionalities:
-
-| Name                    | Input                                      | Output                           |  
-|-------------------------|--------------------------------------------|----------------------------------|    
-| ZIP32 keygen            | `secret`, `i`                              | `sk`                             |  
-| Key components gen      | `sk`                                       | `ask`, `fvk`, `ivk`, `ovk`, `dk` |  
-| Address diversifier     | `dk`, `ivk`, `index`                       | `addr`                           |  
-| Action shielder         | `action_plain`, `rseed`,`aplha`,`rcv`      | `action_shielded`                |  
-| Note decryption via ivk | `ivk`, `epk`, `C_enc`                      | `note_plain` or failture         |  
-| Note decryption via ovk | `ovk`, `epk`, `C_out`, `C_enc`, `cm`, `cv` | `note_plain`                     |
-| Nullifier gen           | `nk`, `rseed`, `cm`, `nf_old`              | `nf_new`                         |  
-| Spend signer            | `SIGHASH`, `ask`, `alpha`                  | `spendAuthSig`                   |  
-| Binding signer          | `SIGHASH`, `rcv[]`, `cv_net`               | `bindingSig`                     |  
-| Prover                  | `action_plain[]`, `action_shielded[]`, `fvk`, `alpha[]`, `rcv[]`, `rssed[]`, `cv_net`  | `proof` |
-[]()
-
-## Trezor implementation
+## `trezor-firmware` implementation
 
 Zcash libraries are now available in Rust. I would like to use them directly as dependencies. It will be necesarry to make them `![no_std]` compatible. I'm actively working on that.
 
-#### [librustzcash](https://github.com/zcash/librustzcash)
+| library | current status |
+| -       | -              |
+| [f4jumble](https://github.com/zcash/librustzcash/components/f4jumble) | no_std support completed |
+| [zcash_note_encryption](https://github.com/zcash/librustzcash/components/f4jumble) | no_std support completed |
+| [orchard](https://github.com/zcash/orchard) | alloc support completed, working on no_std |
+| [pasta_curves](https://github.com/zcash/pasta_curves) | support no_std |
+| [reddsa](https://github.com/str4d/redjubjub) | no_std sopport completed |
+| [fpe](https://github.com/str4d/fpe) | supports alloc |
+| poseidon | currently alloc-based version in orchard crate, could be no_std | 
 
-We need only f4jumble components, which I have already [rewrote]() into no_std.
-
-#### [orchard](https://github.com/zcash/orchard)
-
-Almost whole crate will be rewritten into no_std. You can check my proposal and progress [here]().
-
-#### [pasta_curves](https://github.com/zcash/pasta_curves)
-
-Crate is no_std.
-
-#### [reddsa]()
-
-no data
-
-#### poseidon
-
-will be no_std
-
-## Suite implementation
+## `trezorctl` implementation
 
 [lightwalletd](https://github.com/zcash/lightwalletd) (coded in Go lang) can be used for communication with a full node.
 
