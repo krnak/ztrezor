@@ -124,7 +124,7 @@ where
  
 Additionally, every account has 2^88 available diversified payment addresses belonging to the same spending authority. _Default payment address_ is indexed by 0.  
 
-_A change address_ is an address where a payer returns the rest of his unspent inputs. Since shielded addresses are not recorded to the blockchain (directly), we can fix one change address without losing privacy. We set the default address to be the change address.   
+_A change address_ is an address where a payer returns the rest of his unspent inputs. Since shielded addresses are not recorded to the blockchain, we can fix one change address without losing privacy. We set the default address to be the change address.   
  
 For a `secret` seed, Orchard master key and master chaincode is generated as follows.  
  
