@@ -12,15 +12,43 @@ I write python-styled pseudocode for illustrative purposes. Note that `+` is byt
 
 ## Structure of this document
 
-TODO: roll out sections, protocol links, security model etc.
+Sections
 
-Sections from [Shielded transactions](#shielded-transactions) to [Blockchain scanning](#blockchain-scanning) are a high level overview of Zcash technology and terminology.
+- [Shielded transactions](#shielded-transactions)
+- [Pallas and Vesta curves](#pallas-and-vesta-curves)
+- [ZIP32](#zip32)
+- [Key components](#key-components)
+- [Unified addresses](#unified-addresses)
+- [Spending (input) notes](#spending-input-notes)
+- [Sending (output) notes](#sending-output-notes)
+- [Orchard Actions](#orchard-actions)
+- [Transaction authorization](#transaction-authorization)
+- [Blockchain scanning](#blockchain-scanning)
 
-Section [Transaction flow](#transaction-flow) describes sending shielded transactions from  Trezor.
+are a high level overview of Zcash technology and terminology.
 
-Section [Detailed protocol](#detailed-protocol) is a result of an effort to describe the previous protocol more explicitly.
+Section [Security model](#security-model) describes the level of security we reach by our implementation.
 
-Sections [Transaction fields](#transaction-fields) and [Action description fields](#action-description-fields) describes transaction fields and they are copy-pasted from the Zcash documentation.
+Sections
+
+- [Simplified protocol](#simplified-protocol) and
+- [Detailed protocol](#detailed-protocol)
+
+describe sending shielded transactions from  Trezor.
+
+Sections
+
+- [Transaction fields](#transaction-fields) and
+- [Action description fields](#action-description-fields)
+
+describe transaction fields and they are copy-pasted from the Zcash documentation.
+
+Sections
+
+- [`trezor-firmware` implementation](#trezor-firmware-implementation) and
+- [`trezorlib` implementation](#trezorlib-implementation)
+
+capture some notes on details of our implementation.
  
 ## Shielded transactions  
  
@@ -58,28 +86,7 @@ Multiple shielded protocols can be used within one transaction as illustrated be
 
 <img src="multiple.png" alt="tx using Orchard and Sapling" width="600"/>
 
-Through this document, I consider a transaction that contains only transparent inputs and outputs and Orchard shielded inputs and outputs. Hence I minimize usage of _Orchard_ prefix. For example by _binding signature_ I mean _Orchard binding signature_, not _Sapling binding signature_.
- 
-## Security model
-
-<img src="interactions.png" alt="Trezor - Host - User - full node interactions" width="600"/>  
- 
-Our communication scheme consists of four players. User, Trezor, a Host (typically a PC or a cell phone) and Zcash fullnode (a server maintaining a full blockchain copy).  
- 
-Our security goals differs according to following two scenarios:  
- 
-1. Even if the **Host is malicious**, he cannot spend Zcash funds from the Trezor. However, he can violate Zcash privacy features.  
- 
-2. If the **Host is honest**, then all Zcash privacy features are preserved.
-
-Zcash privacy guarantees are for example:
- 
-- **Address unlinkability:** Given two shielded addresses, nobody can decide whether they belong to the same spending authority.  
- 
-- **Transaction graph shielding:** Given a shielded input and a copy of the blockchain, nobody can decide to which previously committed shielded outputs this input corresponds to.  
- 
-- **Amount privacy:** Given a shielded input (resp. output), nobody can compute how many ZECs were spent (resp. sent).  
-
+Through this document, I consider a transaction that contains only transparent inputs and outputs and Orchard shielded inputs and outputs. Hence I minimize usage of _Orchard_ prefix. For example by _binding signature_ I mean _Orchard binding signature_, not _Sapling binding signature_. 
 
 ## Pallas and Vesta curves
 
@@ -312,12 +319,30 @@ def get_incoming_notes(ivk, block):
 Further, all detected incoming Notes and their merkle tree paths should be stored in the Host. The Host should not store only indexes of incoming transactions, because querying some blocks more than others reveals information about the user's transactions to the fullnode.
 
 The optimal approach would be to use Zcash light client, which uses some optimizations and batching techniques to reach maximal efficiency.
+
+## Security model
+
+<img src="interactions.png" alt="Trezor - Host - User - full node interactions" width="600"/>  
+ 
+Our communication scheme consists of four players. User, Trezor, a Host (typically a PC or a cell phone) and Zcash fullnode (a server maintaining a full blockchain copy).  
+ 
+Our security goals differs according to following two scenarios:  
+ 
+1. Even if the **Host is malicious**, he cannot spend Zcash funds from the Trezor. However, he can violate Zcash privacy features.  
+ 
+2. If the **Host is honest**, then all Zcash privacy features are preserved.
+
+Zcash privacy guarantees are for example:
+ 
+- **Address unlinkability:** Given two shielded addresses, nobody can decide whether they belong to the same spending authority.  
+ 
+- **Transaction graph shielding:** Given a shielded input and a copy of the blockchain, nobody can decide to which previously committed shielded outputs this input corresponds to.  
+ 
+- **Amount privacy:** Given a shielded input (resp. output), nobody can compute how many ZECs were spent (resp. sent). 
  
 ## Simplified protocol
 
 TODO: update image
-
-<img src="flow.png" alt="tx flow" width="550"/>
 
 1. User specifies transaction outputs.  
 2. Host selects appropriate inputs from his database and he sets a transaction fee.
@@ -333,7 +358,7 @@ TODO: update image
 
 TODO: Have signatures to be streamed?
 
-## OUTDATED: Detailed protocol
+## Detailed protocol
 
 Structs:
 ```  
@@ -469,17 +494,17 @@ source: [ZIP 225](https://zips.z.cash/zip-0225)
 
 Zcash libraries are now available in Rust. I would like to use them directly as dependencies. It will be necessary to make them `![no_std]` compatible. I'm actively working on that.
 
-| library | current status |
-| -       | -              |
-| [f4jumble](https://github.com/zcash/librustzcash/components/f4jumble) | no_std support completed |
-| [zcash_note_encryption](https://github.com/zcash/librustzcash/components/f4jumble) | no_std support completed |
-| [orchard](https://github.com/zcash/orchard) | alloc support completed, working on no_std |
-| [pasta_curves](https://github.com/zcash/pasta_curves) | support no_std |
-| [reddsa](https://github.com/str4d/redjubjub) | no_std support completed |
-| [fpe](https://github.com/str4d/fpe) | supports alloc |
-| poseidon | currently alloc-based version in orchard crate, could be no_std |
+| library | no_std | alloc |
+| -       | -      | -     |
+| [f4jumble](https://github.com/zcash/librustzcash/components/f4jumble) | :heavy_check_mark: | :heavy_check_mark: |
+| [zcash_note_encryption](https://github.com/zcash/librustzcash/components/f4jumble) | :heavy_check_mark: | :heavy_check_mark: |
+| [orchard](https://github.com/zcash/orchard) | in process | :heavy_check_mark: |
+| [pasta_curves](https://github.com/zcash/pasta_curves) | :heavy_check_mark: | :heavy_check_mark: |
+| [reddsa](https://github.com/str4d/redjubjub) | :heavy_check_mark: | :heavy_check_mark: |
+| [fpe](https://github.com/str4d/fpe) | in process | :heavy_check_mark: |
+| poseidon | nope | :heavy_check_mark: |
 
-## `trezorctl` implementation
+## `trezorlib` implementation
 
 [lightwalletd](https://github.com/zcash/lightwalletd) (coded in Go lang) can be used for communication with a full node.
 
