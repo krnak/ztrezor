@@ -46,7 +46,7 @@ describe transaction fields and they are copy-pasted from the Zcash documentatio
 Document ends with standalone Sections:
 
 - [Comparison with the Ledger](#comparison-with-the-ledger)
-- [Data flow](#data-flow) (no finished)
+- [Data flow](#data-flow) (not finished)
 - [`trezor-firmware` implementation](#trezor-firmware-implementation)
 - [`trezorlib` implementation](#trezorlib-implementation)
 
@@ -394,7 +394,7 @@ Detailed protocol:
     - Trezor generates a random 32 byte sequence  `rseed`
     - Trezor generates a random Pallas scalars `alpha` and `rcv`     
     - Trezor computes Action shielding using `rseed` and `rcv`
-    - if `ovk_flag` is set to 1
+    - if `enable_C_out` is set to 1
         - then `C_out` is encryption of `(pk_d,esk)`
         - else `C_out` is encryption of random data by a random key
     - Trezor computes input Note nullifier `nf_new` using `nk`
