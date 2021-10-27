@@ -42,3 +42,7 @@ Trezor firmware were extended by
 See (comparison)[https://github.com/trezor/trezor-firmware/compare/master...jarys:zcash].
 
 Also we implemented the `alloc` feature using [`static-alloc`](https://crates.io/crates/static-alloc) crate and 8kB static array. Unfortunately this requires the `alloc_error_handler` feature, which is currently unstable \[[issue](https://github.com/rust-lang/rust/issues/66740)\]. Avoiding unstable Rust is subject of future enhancements.
+
+# Documentation
+
+I described signing protocol, security model, action shielding dataflow and other project related stuff in (work in progress) [project documentation](https://github.com/jarys/ztrezor/blob/main/doc/README.md). 
