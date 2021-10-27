@@ -8,6 +8,8 @@ We are glad to announce the submission of milestone M.1. During past two months 
 - enabled alloc feature on Trezor to facilitate orchard crate import
 - added no_std+alloc support for all necessary Orchard crates
 
+This effort results in direct import of orchard crate into Trezor, including all necessary primitives and schemes like key generator, action commitment or transaction signing.
+
 So far, we import all necessary primitives from fully tested crates, so writing our own unit tests would be superfluous.
 
 Finally we are excited to announce that we are nowhere far from submission of M.2.
@@ -40,7 +42,7 @@ Trezor firmware was extended by
 - trezorctl zcash commands
 - zcash diagnostic protobuf messages
 
-See (comparison)[https://github.com/trezor/trezor-firmware/compare/master...jarys:zcash].
+See [comparison](https://github.com/trezor/trezor-firmware/compare/master...jarys:zcash).
 
 Also we implemented the `alloc` feature using [`static-alloc`](https://crates.io/crates/static-alloc) crate and 8kB static array. Unfortunately this requires the `alloc_error_handler` feature, which is currently unstable \[[issue](https://github.com/rust-lang/rust/issues/66740)\]. Avoiding unstable Rust is subject of future enhancements.
 
