@@ -14,7 +14,7 @@ Finally we are excited to announce that we are nowhere far from submission of M.
 
 # M.1 Detailed
 
-## Primitives table
+### Primitives table
 
 | library | no_std+alloc |
 | -       | -            |
@@ -26,11 +26,11 @@ Finally we are excited to announce that we are nowhere far from submission of M.
 | [fpe](https://github.com/str4d/fpe) | ✔️ [PR](https://github.com/str4d/fpe/pull/21) |
 | poseidon | ✔️ in orchard |
 
-## Sinsemilla
+### Sinsemilla
 
 Sinsemilla's design is based on a 64kB precomputed table. For future memory optimizations, we made a benchmark of the 'table-less' version of Sinsemilla. Hashing speed is approx. 100 bits/second, resulting in 11s per 1 Action commitment.
 
-## Trezor firmware
+### Trezor firmware
 
 Trezor firmware were extended by
 
@@ -43,6 +43,6 @@ See (comparison)[https://github.com/trezor/trezor-firmware/compare/master...jary
 
 Also we implemented the `alloc` feature using [`static-alloc`](https://crates.io/crates/static-alloc) crate and 8kB static array. Unfortunately this requires the `alloc_error_handler` feature, which is currently unstable \[[issue](https://github.com/rust-lang/rust/issues/66740)\]. Avoiding unstable Rust is subject of future enhancements.
 
-## Documentation
+### Documentation
 
 I described signing protocol, security model, action shielding dataflow and other project related stuff in (work in progress) [project documentation](https://github.com/jarys/ztrezor/blob/main/doc/README.md). 
