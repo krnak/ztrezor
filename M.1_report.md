@@ -8,7 +8,7 @@ We are glad to announce the submission of milestone M.1. During past two months 
 - enabled alloc features on Trezor to facilitate orchard crate import
 - added no_std+alloc support for all necessary Orchard crates
 
-So far, we import all necessary primitives from fully tested crates, so writing our own unit test would be superfluous.
+So far, we import all necessary primitives from fully tested crates, so writing our own unittests would be superfluous.
 
 Finally we are excited to announce that we are nowhere far from submission of M.2.
 
