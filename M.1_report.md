@@ -30,7 +30,7 @@ Finally we are excited to announce that we are nowhere far from submission of M.
 
 Sinsemilla's design is based on a 64kB precomputed table. For future memory optimizations, we made a benchmark of the 'table-less' version of Sinsemilla. Hashing speed is approx. 100 bits/second, resulting in 11s per 1 Action commitment.
 
-## trezor-firmaware
+## Trezor firmware
 
 Trezor firmware were extended by
 
