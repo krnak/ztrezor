@@ -18,7 +18,7 @@ Finally we are excited to announce that we are nowhere far from submission of M.
 
 ### no_std+alloc support
 
-| library | no_std+alloc |
+| crate | no_std+alloc |
 | -       | -            |
 | [f4jumble](https://github.com/zcash/librustzcash/tree/master/components/f4jumble) | ✔️ [PR](https://github.com/zcash/librustzcash/pull/446) |
 | [zcash_note_encryption](https://github.com/zcash/librustzcash/tree/master/components/zcash_note_encryption) | ✔️ [PR](https://github.com/zcash/librustzcash/pull/450) |
