@@ -1,3 +1,5 @@
+:warning: This document is work in progress. :warning: 
+
 # Trezor support for Zcash shielded transaction  
  
 ## Introduction  
