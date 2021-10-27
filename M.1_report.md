@@ -16,7 +16,7 @@ Finally we are excited to announce that we are nowhere far from submission of M.
 
 # M.1 Detailed
 
-### Primitives table
+### no_std+alloc support
 
 | library | no_std+alloc |
 | -       | -            |
