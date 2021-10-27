@@ -32,7 +32,7 @@ Sinsemilla's design is based on a 64kB precomputed table. For future memory opti
 
 ### Trezor firmware
 
-Trezor firmware were extended by
+Trezor firmware was extended by
 
 - zcash python module
 - zcash Rust module
