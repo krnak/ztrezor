@@ -5,10 +5,10 @@ We are glad to announce the submission of milestone M.1. During past two months 
 - analyzed design and memory and computational requirements of all Zcash primitives
 - explored transaction shielding and authorization data flows
 - added basic structure of zcash app into trezor-firmware monolith
-- enabled alloc features on Trezor to facilitate orchard crate import
+- enabled alloc feature on Trezor to facilitate orchard crate import
 - added no_std+alloc support for all necessary Orchard crates
 
-So far, we import all necessary primitives from fully tested crates, so writing our own unittests would be superfluous.
+So far, we import all necessary primitives from fully tested crates, so writing our own unit tests would be superfluous.
 
 Finally we are excited to announce that we are nowhere far from submission of M.2.
 
@@ -25,6 +25,7 @@ Finally we are excited to announce that we are nowhere far from submission of M.
 | [reddsa](https://github.com/str4d/redjubjub) | ✔️ [branch](https://github.com/jarys/redjubjub/tree/no-std-alloc) |
 | [fpe](https://github.com/str4d/fpe) | ✔️ [PR](https://github.com/str4d/fpe/pull/21) |
 | poseidon | ✔️ in orchard |
+| [bech32m](https://github.com/rust-bitcoin/rust-bech32) | ✔️ |
 
 ### Sinsemilla
 
