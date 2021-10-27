@@ -12,7 +12,7 @@ This effort results in direct import of orchard crate into Trezor, including all
 
 So far, we import all necessary primitives from fully tested crates, so writing our own unit tests would be superfluous.
 
-Finally we are excited to announce that we are nowhere far from submission of M.2.
+Finally we are excited to announce that we are not far from submission of M.2.
 
 # M.1 Detailed
 
