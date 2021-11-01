@@ -203,7 +203,7 @@ def gen_diversified_address(j, dk, ivk):
 
 ![unified address infographic](ua_qr.png)
 
-Unified addresses are one of NU5 features. They enable a user to share his transparent and shielded payment addresses in one standardized bundle. UAs are well described in [ZIP 316](https://github.com/zcash/zips/blob/main/zip-0316.rst).
+Unified addresses (UAs) are one of NU5 features. They enable a user to share his transparent and shielded payment addresses in one standardized bundle. UAs are well described in [ZIP 316](https://github.com/zcash/zips/blob/main/zip-0316.rst).
 
 Although UAs are not an indispensable feature, we want to support them and they are part of the grant description.
 
@@ -215,12 +215,12 @@ In a shortcut:
 
 ```
 ua_bytes = address_1 || ... || address_n
-address = typecode || length || key
-length = uint8
-typecode = 0x00 # for transparent P2PKH
-           0x01 # for transparent P2SH
+address = compatSize(typecode) || compatSize(length) || key
+# length = byte length of a key 
+typecode = 0x03 # for Orchard
            0x02 # for Sapling
-           0x03 # for Orchard
+           0x01 # for transparent P2SH
+           0x00 # for transparent P2PKH
 
 padding = [0x00]*16 # 16 zero bytes
 ua_encoded = F4Jumble(ua_bytes || padding)
@@ -228,6 +228,14 @@ unified_address = "u" || Bech32m(ua_encoded)
 ```
 
 where `F4Jumble` is an unkeyed 4-round Feistel construction to approximate a random permutation described in [ZIP 316](https://github.com/zcash/zips/blob/main/zip-0316.rst). This function makes it computationally impossible to generate two lexicographically close addresses. Therefore it should be sufficient to check only first 16 bytes when spending to UA (**not confirmed, just my reasoning**).
+
+UA's components are ordered by priority according to this priority list:
+
+1. Orchard
+2. Sapling
+3. transparent
+
+Each address type (Orchard, Sapling, transparent) may be included only once. Otherwise UA will be rejected. UA containing only a transparent address will be rejected.
 
 TODO: autoshielding feature
  
