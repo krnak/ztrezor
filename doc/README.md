@@ -222,9 +222,11 @@ typecode = 0x03 # for Orchard
            0x01 # for transparent P2SH
            0x00 # for transparent P2PKH
 
-padding = [0x00]*16 # 16 zero bytes
+hrp = "u"     # for mainnet
+      "utest" # for testnet
+padding = hrp + [0x00]*(16 - len(hrp))
 ua_encoded = F4Jumble(ua_bytes || padding)
-unified_address = "u" || Bech32m(ua_encoded)
+unified_address = hrp || Bech32m(ua_encoded)
 ```
 
 where `F4Jumble` is an unkeyed 4-round Feistel construction to approximate a random permutation described in [ZIP 316](https://github.com/zcash/zips/blob/main/zip-0316.rst). This function makes it computationally impossible to generate two lexicographically close addresses. Therefore it should be sufficient to check only first 16 bytes when spending to UA (**not confirmed, just my reasoning**).
@@ -233,11 +235,12 @@ UA's components are ordered by priority according to this priority list:
 
 1. Orchard
 2. Sapling
-3. transparent
+3. transparent (P2SH and P2PKH)
 
 Each address type (Orchard, Sapling, transparent) may be included only once. Otherwise UA will be rejected. UA containing only a transparent address will be rejected.
 
 TODO: autoshielding feature
+TODO: UA requirements
  
 ## Sending (output) Notes  
 
