@@ -58,4 +58,4 @@ Trezor Connect integration will be added as part of M.3. with `sign_tx` function
 
 ### Export Full Viewing Key layout
 
-<im src="img/export.png" witdh="200px">
+<img src="img/export.png" witdh="200px">
