@@ -1,6 +1,6 @@
 # M.2 Summary
 
-We are glad to announce the submission of milestone M.2. New features are
+We are glad to announce submission of the milestone M.2. New features are
 
 - Derivation of spending keys according to the ZIP-32
 - Orchard shielded addresses
