@@ -4,11 +4,11 @@ We are glad to announce the submission of milestone M.2. New features are
 
 - Derivation of spending keys according to the ZIP-32
 - Orchard shielded addresses
-- Unified Addresses acording to the ZIP-316
+- Unified Addresses according to the ZIP-316
 - Get an address and viewing keys via `trezorctl` command
 - Review an address on display (text or QR code)
 
-This moves us to the 3rd and the most complex stage of the firmware developement - transaction shielding and signing.
+This moves us to the 3rd and the most complex stage of the firmware development - transaction shielding and signing.
 
 # M.2 Detailed
 
@@ -59,3 +59,5 @@ Trezor Connect integration will be added as part of M.3. with `sign_tx` function
 ### Export Full Viewing Key layout
 
 <img src="img/export.png" witdh="200px">
+
+
