@@ -1,9 +1,9 @@
-:warning: This document is work in progress. :warning: 
+:warning: This document is work in progress. :warning:
 
 # Trezor support for Zcash shielded transaction  
- 
+
 ## Introduction  
- 
+
 The goal of this document is to explain how Zcash Orchard shielded transactions are implemented in Trezor.
 
 ## Notation
@@ -54,27 +54,27 @@ Document ends with standalone Sections:
 - [`trezorlib` implementation](#trezorlib-implementation)
 
 ## Shielded transactions  
- 
+
 Zcash is designed as an extension of bitcoin, however it is an independent cryptocurrency. It enables to hide a transaction graph to enhance the user's privacy.  
- 
+
 There are two types of Zcash addresses: _transparent_ and _shielded_. Transparent addresses are equivalent to Bitcoin addresses. For a shielded address, nobody (except its owner) can see the address balance, incoming and outcoming payments. These two types of addresses are compatible, hence it is possible to send shielded funds to a transparent address and vice versa. It is also possible to send fully shielded transactions from one shielded address to another, as illustrated below.  
- 
+
 <img src="t2z.png" alt="transparent - shielded exchanges" width="450"/>  
 
 _image source: `https://www.veradiverdict.com/p/snapchat-for-payments`_  
- 
+
 In fact, a transaction can be even more mixed, having multiple transparent inputs and outputs and multiple shielded inputs and outputs, as illustrated below.  
- 
+
 <img src="combined.png" alt="combined tx" width="600"/>  
- 
+
 Transaction creator proves the integrity of the shielded transaction (tx balance, spend authorization, no double spending...) by attaching a zero knowledge proof.  
- 
+
 There are three consecutive versions of Zcash shielded protocol: Sprouts, Sapling and Orchard.  
- 
+
 - Sprouts (2016) is the first naive clumsy implementation of shielded transactions.  
- 
+
 - Sapling (2018) integrated many circuit optimizations using algebraic hash functions over the JubJub curve. Further it brought major restructuralizations of key components and shielded data.
- 
+
 - Orchard (2021) introduced a more efficient Halo 2 zk-proving protocol and several additional circuit and structural changes.  
 
 <img src="versions.png" alt="versions" width="700"/>
@@ -82,14 +82,14 @@ There are three consecutive versions of Zcash shielded protocol: Sprouts, Saplin
 _transaction structure for different shielded protocols_
 
 Each of these protocols has its own privacy pool, e.i. privacy set of all funds currently shielded by the protocol. The more funds were shielded by the protocol, the higher level of privacy pool reaches.  
- 
+
 Since Sprouts depreciation is scheduled (2021), users are forced to migrate their shielded funds into Sapling pool. Otherwise they will lose them irrevocably.
 
 Multiple shielded protocols can be used within one transaction as illustrated below.
 
 <img src="multiple.png" alt="tx using Orchard and Sapling" width="600"/>
 
-Through this document, I consider a transaction that contains only transparent inputs and outputs and Orchard shielded inputs and outputs. Hence I minimize usage of _Orchard_ prefix. For example by _binding signature_ I mean _Orchard binding signature_, not _Sapling binding signature_. 
+Through this document, I consider a transaction that contains only transparent inputs and outputs and Orchard shielded inputs and outputs. Hence I minimize usage of _Orchard_ prefix. For example by _binding signature_ I mean _Orchard binding signature_, not _Sapling binding signature_.
 
 ## Pallas and Vesta curves
 
@@ -111,45 +111,45 @@ r = 0x40000000000000000000000000000000224698fc0994a8dd8c46eb2100000001
 These two curves were designed by Zcash cryptographers. They are documented on [github](https://github.com/zcash/pasta). All Orchard's cryptography runs over the Pallas curve. Vesta is used only during a proof computation.
 
 ## ZIP32  
- 
+
 Paths of Orchard keys are of type  
- 
+
 ```  
 m_orchard/purpose'/coin_type'/account'  
 ```  
- 
+
 where  
- 
+
 - `purpose` is set to `32'` following the BIP 43 recommendation.  
 - `coin_type` is set to `133'` following the SLIP 44 recommendation.  
 - `account` is numbered from index 0 in sequentially increasing manner.  
- 
+
 Additionally, every account has 2^88 available diversified payment addresses belonging to the same spending authority. _Default payment address_ is indexed by 0.  
 
 _A change address_ is an address where a payer returns the rest of his unspent inputs. Since shielded addresses are not recorded to the blockchain, we can fix one change address without losing privacy. We set the default address to be the change address.   
- 
+
 For a `secret` seed, Orchard master key and master chaincode is generated as follows.  
- 
+
 ```python
 I = Blake2b_512(b"ZcashIP32Orchard", secret)  
 sk_m, c_m = I[:32],I[32:]   
 ```  
- 
+
 Given a pair of secret key `sk` and a chain code `c`, `i`-th Orchard child key is generated as follows:  
- 
+
 ```python  
 if i < 2**31:  
     raise ValueError("All Orcarhd secret keys must be hardened.")  
 I = Blake2b_512(b"Zcash_ExpandSeed", c + [0x81] + sk + i.to_bytes())  
 sk_i, c_i = I[:32],I[32:]   
 ```  
- 
+
 ## Key components  
- 
+
 _Spending key_ `sk` is used as a seed for generating Orchard key components. Components are derived hierarchically as illustrated below.  
 
 <img src="keys.png" alt="key structure" width="600"/>  
- 
+
 Here is the table of key components with detailed names and comments.  
 
 | Symbol | Name                          | Comment |  
@@ -160,12 +160,12 @@ Here is the table of key components with detailed names and comments.
 | `rivk` |                               | some between-product randomness |  
 | `fvk`  | full viewing key              | is the triple `(ak,nk,rivk)` | Enables to prove transaction correctness and to derive other keys. Leaves the Trezor.  |  
 | `ivk`  | incoming viewing key          | Enables to detect and decrypt all incoming Notes.  |  
-| `ovk`  | outgoing viewing key          | Enables to decrypt Notes sent from this account. This feature is optional. Every time a Note is sent from this, the user decides whether it will be backwards decryptable.  |  
+| `ovk`  | outgoing viewing key          | Enables to decrypt Notes sent from this account. This feature is optional, but force-enabled in Trezor. |  
 | `dk`   | diversifier deriving key      | Enables do derive diversifiers.  |  
 | `d`    | address diversifier           | |  
 | `pk_d` | diversified transmission key  | |  
 | `addr` | diversified payment address    | is the pair `(d,pk_d)`  |  
- 
+
 
 Here is the illustrative pseudocode for key components derivation. See Zcash's documentation for details. `sinsemilla_commit` and `hash_to_curve` are complex functions based on algebraic hash functions and elliptic curve isogenies. `r` is the Pallas scalar field and `q` is the Pallas base field.
 
@@ -173,22 +173,22 @@ Here is the illustrative pseudocode for key components derivation. See Zcash's d
 # + is concatenation  
 def PRF(sk, m):  
     return Blake2b_512(b"Zcash_ExpandSeed", sk + m)  
- 
+
 ask  = PRF(sk, [0x06]) mod r  
- 
+
 ak   = ask*G # G is the Pallas generator  
 nk   = PRF(sk, [0x07]) mod q  
 rivk = PRF(sk, [0x08]) mod r  
- 
+
 fvk = (ak,nk,rivk)  
- 
+
 ivk  = sinsemilla_commit(rivk, ak, nk)  
- 
+
 I    = PRF(rivk, [0x82] + ak + nk)   
 dk   = I[:32]  
 ovk  = I[32:]  
- 
- 
+
+
 def gen_diversified_address(j, dk, ivk):  
     j_bytes = int_to_bytes(j, byte_length=11, signed=False)  
     d = FF1_AES_256.encrypt(dk_i, b"", j_bytes)  
@@ -216,7 +216,7 @@ In a shortcut:
 ```
 ua_bytes = address_1 || ... || address_n
 address = compatSize(typecode) || compatSize(length) || key
-# length = byte length of a key 
+# length = byte length of a key
 typecode = 0x03 # for Orchard
            0x02 # for Sapling
            0x01 # for transparent P2SH
@@ -240,26 +240,27 @@ UA's components are ordered by priority according to this priority list:
 Each address type (Orchard, Sapling, transparent) may be included only once. Otherwise UA will be rejected. UA containing only a transparent address will be rejected.
 
 TODO: autoshielding feature
+
 TODO: UA requirements
- 
+
 ## Sending (output) Notes  
 
 In Zcash terminology, the user sends and receives _Notes_. To send a Note, user chooses Note's value `v`, Note's receiver address `addr` and (an optional) Note's arbitrary comment `memo`.  
- 
+
 To create and send a new Note, user shields the Note, using a randomness `rseed` and `rcv`, getting a tuple (`cm`, `cv`, `C_enc`, `C_out`, `epk`). This tuple is recorded to the blockchain.  
- 
+
 - `cm` - Note commitment  
 - `cv` - value commitment  
 - `C_enc` - Note encryption for a recipient  
 - `C_out` - Note encryption for a sender (optional)  
 - `epk` - ephemeral key for a Diffie-Helman key exchange  
 
-All these components must be computed in Trezor. It is the simpler way how Trezor can validate integrity and randomizations of these components.
+All these components must be computed in Trezor. It is the simplest way how Trezor can validate integrity and randomizations of all these components.
 
 ## Spending (input) Notes  
 
 When user is spending a Note, the only information related to the Note he must reveal within a shielded transaction is the Note's _nullifier_ `nf_new`, computed from the input Note's data `(cm, rseed, nf_old)` and user's nullifier key `nk`.
- 
+
 Nullifier serves as the serial number of a Note. Once the nullifier is revealed within a valid transaction, Note is spent and any other transaction attempting to spend with the same nullifier will be refused.
 
 Without knowledge of the nullifier key `nk`, nullifier is not linkable to its Note. Hence nobody (including a Note sender), given a nullifier, can distinguish which Note was spent.  
@@ -279,57 +280,57 @@ On the other side, computing `nf` and `rk` in the Trezor raises the implementati
 ## Orchard Actions  
 
 <img src="action.png" alt="action" width="700">
- 
+
 Before sending a shielded Orchard transaction, a sender must pair input Notes with output Notes. Such a pair is called an _Action_.  
- 
+
 Both, set of input Notes and set output Notes, can be padded by _Dummy Notes_, to make these sets equal in size. A Dummy Note is a Note with zero value, no recipient and no connection to previously committed Notes. However Dummy Note is completely indistinguishable from other Notes after the shielding procedure.  
 
 > In order to minimize information leakage, the sender SHOULD randomize the order of Action descriptions in a transaction. Other considerations relating to information leakage from the structure of transactions are beyond the scope of this specification.
 
 _source: NU5 doc § 4.7.3_
- 
+
 ## Transaction authorization  
- 
+
 Shielded part of a transaction is authorized by  
- 
+
 1. `spendAuthSig[]` - _spend authorization signatures_  
 2. `bindingSig` - _binding signature_  
 3. `proof` - zero-knowledge proof of the transaction integrity  
- 
+
 ### Spend authorization signatures  
- 
+
 For each input Note, rerandomized spend validating key `ak` (called `rk`) is a part of an Action description. A signature `spendAuthSig` of transaction's `SIGHASH` made by corresponding randomized spend authorizing key `ask` is computed to authorize a spend. Since `ask` never leaves the Trezor, user's ZEC funds cannot be spent without confirmation on Trezor.  
- 
+
 ### Binding signature  
- 
+
 The binding signature proves the balance of the shielded part of a transaction (i.e. all shielded inputs minus all shielded outputs = `v_net`). It uses the homomorphic additivity of Pederson's commitments used for value commitments `cv[]`. The same technique is used in Monero, or MimbleWimble protocol.
- 
+
 ### Proof  
- 
+
 Integrity of a shielded transaction is proven by zk-SNARK (zero-knowledge Succinct Non-interactive ARgument of Knowledge). Zcash Orchard uses a proof system called _Halo 2_. Since the proof generation is computationally demanding, it is delegated to the Host.  
- 
-Prover needs mekle tree paths of Notes spent by transaction to prove: "This Note is committed somewhere in the blockchain.". A root `rt` of the mekle tree of every Note commitment in the blockchain is fixed and attached to a transaction as a reference for this statement. The root can be computed from any previous state of the blockchain. However, the fresher the root taken, the bigger the privacy set.  
- 
+
+Prover needs merkle tree paths of Notes spent by transaction to prove: "This Note is committed somewhere in the blockchain.". A root `rt` of the merkle tree of every Note commitment in the blockchain is fixed and attached to a transaction as a reference for this statement. The root can be computed from any previous state of the blockchain. However, the fresher the root taken, the bigger is the privacy set.  
+
 **Since the proof is not a part of transaction signed fields, Trezor has no control over the proof randomness.** It follows that the Host can manipulate randomness of the proof arbitrarily, for example to encode some information into the proof. In our model, a malicious Host can violate all privacy features of the protocol. Nevertheless, this vulnerability enables the Host to leak information directly through the main channel (e.i. by recording a transaction with a rigged proof onto blockchain), instead of communicating data through a side channel.
 
-We don't consider this issue to be important. Backward proof randomness checking could be implemented to detect such Host's mal-behaviour, but it would be technically demanding and it would require circuite modifications.
- 
+We don't consider this issue to be important. Backward proof randomness checking could be implemented to detect such Host's mal-behaviour, but it would be technically demanding and it would require circuit modifications.
+
 ## Blockchain scanning  
- 
+
 To detect incoming Notes, a Host must try to decrypt every new shielded Note in the blockchain using incoming viewing key `ivk`. Notes are encrypted by `AEAD_CHACHA20_POLY1305`, which returns integrity error for inappropriate keys. You can find illustrative python pseudocode bellow.   
- 
+
 ```python  
 def get_incoming_notes(ivk, block):  
     for (C_enc, epk) in block:  
         shared_key = Pallas.multiply(scalar=ivk, point=epk)  
-        KDF_input  = shared_key + epk # + is concatenation  
+        KDF_input  = shared_key + epk  # + is concatenation  
         symetric_key = Blake2b_256("Zcash_OrchardKDF", KDF_input)  
         try:  
             yield AEAD_CHACHA20_POLY1305(symetric_key).decrypt(C_enc)  
         except CiphertextIntegrityError:  
             continue  
 ```  
- 
+
 Further, all detected incoming Notes and their merkle tree paths should be stored in the Host. The Host should not store only indexes of incoming transactions, because querying some blocks more than others reveals information about the user's transactions to the fullnode.
 
 The optimal approach would be to use Zcash light client, which uses some optimizations and batching techniques to reach maximal efficiency.
@@ -337,24 +338,24 @@ The optimal approach would be to use Zcash light client, which uses some optimiz
 ## Security model
 
 <img src="interactions.png" alt="Trezor - Host - User - full node interactions" width="600"/>  
- 
+
 Our communication scheme consists of four players. User, Trezor, a Host (typically a PC or a cell phone) and Zcash fullnode (a server maintaining a full blockchain copy).  
- 
+
 Our security goals differs according to following two scenarios:  
- 
+
 1. Even if the **Host is malicious**, he cannot spend Zcash funds from the Trezor. However, he can violate Zcash privacy features.  
- 
+
 2. If the **Host is honest**, then all Zcash privacy features are preserved.
 
 Zcash privacy guarantees are for example:
- 
-- **Address unlinkability:** Given two shielded addresses, nobody can decide whether they belong to the same spending authority.  
- 
-- **Transaction graph shielding:** Given a shielded input and a copy of the blockchain, nobody can decide to which previously committed shielded outputs this input corresponds to.  
- 
-- **Amount privacy:** Given a shielded input (resp. output), nobody can compute how many ZECs were spent (resp. sent). 
- 
-## Simplified protocol
+
+- **Shielded address unlinkability:** Two shielded addresses with the same spending authority cannot be linked (without knowledge of Incoming Viewing Key).  
+
+- **Transaction graph shielding:** As in Bitcoin, every shielded input corresponds to some shielded output. However this correspondence is unrecognizable (without knowledge of Incoming Viewing Key for a particular tuple).
+
+- **Amount privacy:** Given a shielded input (resp. output), nobody can compute how many ZECs were spent (resp. sent).
+
+## Simplified protocol (outdated)
 
 ![protocol](simple.png)
 
@@ -372,7 +373,7 @@ Zcash privacy guarantees are for example:
 
 TODO: Have signatures to be streamed?
 
-## Detailed protocol
+## Detailed protocol (outdated)
 
 Structs:
 ```  
@@ -425,11 +426,11 @@ Detailed protocol:
     - Trezor responds with 9 Pallas scalars.
 16. Host authorizes the transaction by zk-`proof`.  
 17. Host sends the authorized transaction to a full node.   
- 
+
 ## Transaction fields
 
 source: [ZIP 225](https://zips.z.cash/zip-0225)
- 
+
 | Bytes | Name | Data Type | Description|  
 |---|-----------------|--------|--------------------------------------------------------------|  
 | 4 | `header`          | uint32 |                                                              |  
@@ -456,8 +457,8 @@ source: [ZIP 225](https://zips.z.cash/zip-0225)
 | `sizeProofsOrchard`   | `proofsOrchard`         | byte[`sizeProofsOrchard`]   | The aggregated zk-SNARK proof. |  
 |64·`n`                 | `vSpendAuthSigsOrchard` | byte[64][`n`]             | Authorizing signatures for each spend of an Orchard Action description.  |  
 |64                     | `bindingSigOrchard`     | byte[64]                  | An Orchard binding signature on the SIGHASH transaction hash. |  
- 
-   
+
+
 Flags:  
 - `enableSpendsOrchard` flag (bit 0)  
 - `enableOutputsOrchard` flag (bit 1)
@@ -466,11 +467,11 @@ Flags:
 We set `nSpendsSapling` and `nOutputsSapling` to 0.
 
 We set `enableSpendsOrchard` and `enableOutputsOrchard` to 1.
- 
+
 ## Action description fields  
 
 source: [ZIP 225](https://zips.z.cash/zip-0225)  
- 
+
 |  Bytes | Name            | Description |  
 |--------|-----------------|-------------|  
 |    32  | `cv`            | A value commitment to the net value of the input note minus the output note. |  
@@ -480,7 +481,7 @@ source: [ZIP 225](https://zips.z.cash/zip-0225)
 |    32  | `ephemeralKey`  | Encoding of an ephemeral Pallas public key `epk`. |  
 |    580 | `encCiphertext` | A ciphertext component for the encrypted output note `C_enc` |  
 |    80  | `outCiphertext` | A ciphertext component `C_out`, that enables the sender to recover the receiver's payment address and note plaintext.|  
- 
+
 
 ## Comparison with the Ledger
 
@@ -495,19 +496,17 @@ source: [ZIP 225](https://zips.z.cash/zip-0225)
 
 ## Delayed shielding
 
-If the Action shielding will be slow, then we can delay the shielding as follows:
+Since Action shielding is slow, we delay the shielding as follows:
 
-Phase 1: Host streams Actions. User confirms outputs on the screen. Trezor computes only a hash of streamed data sequentially.
+Phase 1: Host streams shielded inputs and outputs. User confirms outputs on the screen. Trezor sets a MAC for each message and let the host to store it.
 
-Phase 2: Host restreams all Actions. Trezor shields Actions without user's confirmation and it computes a hash of streamed data sequentially.
+Phase 2: Host restreams all shielded inputs and outputs including a coresponding MACs. Trezor checks a MAC for every message and it sequentially computes a digest of shielded data.
 
-In the end, Trezor checks that the hash from Phase 1 equals the hash from the Phase 2.
-
-This method will increase the complexity of the communication protocol, but user won't have to wait between confirmations of individual shielded outputs.  
+This method will increase the complexity of the communication protocol, but ont he other side it will not let user to wait between confirmations of individual shielded outputs.
 
 ## `trezor-firmware` implementation
 
-Zcash libraries are now available in Rust. I would like to use them directly as dependencies. It will be necessary to make them `![no_std]` compatible. I'm actively working on that.
+Zcash libraries are now available in Rust. I would like to use them directly as dependencies. It will be necessary to make them `![no_std]` compatible.
 
 | library | no_std | alloc |
 | -       | -      | -     |
@@ -516,13 +515,11 @@ Zcash libraries are now available in Rust. I would like to use them directly as 
 | [orchard](https://github.com/zcash/orchard) | in process | :heavy_check_mark: |
 | [pasta_curves](https://github.com/zcash/pasta_curves) | :heavy_check_mark: | :heavy_check_mark: |
 | [reddsa](https://github.com/str4d/redjubjub) | :heavy_check_mark: | :heavy_check_mark: |
-| [fpe](https://github.com/str4d/fpe) | in process | :heavy_check_mark: |
-| poseidon | nope | :heavy_check_mark: |
+| [fpe](https://github.com/str4d/fpe) | in progress | :heavy_check_mark: |
+| poseidon | almost | almost |
 
 ## `trezorlib` implementation
 
 [lightwalletd](https://github.com/zcash/lightwalletd) (coded in Go lang) can be used for communication with a full node.
 
 [halo2](https://github.com/zcash/halo2) crate (coded in Rust) will be used for proof computation.
-
-
