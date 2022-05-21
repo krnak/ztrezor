@@ -16,6 +16,6 @@ I ilustrate some schemes with pseudocode, where `:=` denotes a definition, `||` 
 
 This document has two sections:
 
-[Zcash overview]("zcash_overview.md") section gives basic overview of Zcash technology and it explains related terms. It has sections:
+[Zcash overview](zcash_overview.md) section gives basic overview of Zcash technology and it explains related terms. It has sections:
 
-[Implementation]("implementation.md") section describes implementation of shielded transaction into trezor.
+[Implementation](implementation.md) section describes implementation of shielded transaction into trezor.
