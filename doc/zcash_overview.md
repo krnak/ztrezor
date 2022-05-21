@@ -37,7 +37,7 @@ There are three consecutive versions of Zcash shielded protocol: Sprouts, Saplin
 
 - Sapling (2018) integrated many circuit optimizations using algebraic hash functions over the JubJub curve. Further it brought major restructuralizations of key components and shielded data.
 
-- Orchard (2021) introduced a more efficient Halo 2 zk-proving protocol and several additional circuit and structural changes.  
+- Orchard (2021) introduced a recursive Halo2 zk-proving protocol and several additional circuit and structural changes.  
 
 <img src="versions.png" alt="versions" width="700"/>
 
@@ -45,7 +45,7 @@ _transaction structure for different shielded protocols_
 
 Each of these protocols has its own privacy pool, e.i. privacy set of all funds currently shielded by the protocol. The more funds were shielded by the protocol, the higher level of privacy pool reaches.  
 
-Since Sprouts depreciation is scheduled (2021), users are forced to migrate their shielded funds into Sapling pool. Otherwise they will lose them irrevocably.
+Since Sprouts depreciation is scheduled (2022), users are forced to migrate their shielded funds into Sapling pool. Otherwise they will lose them irrevocably.
 
 Multiple shielded protocols can be used within one transaction as illustrated below.
 
@@ -55,7 +55,7 @@ Through this document, I consider a transaction that contains only transparent i
 
 ## Pallas and Vesta curves
 
-Orchard uses a pair of curves _Pasta_ and _Vesta_ for EC cryptography. These Weierstrass curves defined by equation
+Orchard uses a pair of elliptic curves _Pasta_ and _Vesta_. These Weierstrass curves defined by equation
 
 ```
 y^2 = x^3 + 5
@@ -68,7 +68,7 @@ q = 0x40000000000000000000000000000000224698fc094cf91b992d30ed00000001
 r = 0x40000000000000000000000000000000224698fc0994a8dd8c46eb2100000001
 ```
 
-`q` is the size of the base field of Pallas and scalar field of Vesta. `r` is the size of the base field of Vesta and scalar field of Pallas.
+Integer `q` is the size of the base field of Pallas and scalar field of Vesta. Integer `r` is the size of the base field of Vesta and scalar field of Pallas.
 
 These two curves were designed by Zcash cryptographers. They are documented on [github](https://github.com/zcash/pasta). All Orchard's cryptography runs over the Pallas curve. Vesta is used only during a proof computation.
 
@@ -86,9 +86,12 @@ where
 - `coin_type` is set to `133'` following the SLIP 44 recommendation.  
 - `account` is numbered from index 0 in sequentially increasing manner.  
 
-Additionally, every account has 2^88 available diversified payment addresses belonging to the same spending authority. _Default payment address_ is indexed by 0.  
+Each account is further split into _external_ (addresses for receiving paymets) and _internal_ (e.g. change addresses). Spending authority is shared among external and internal addresses while viewing keys are individual for each.
 
-_A change address_ is an address where a payer returns the rest of his unspent inputs. Since shielded addresses are not recorded to the blockchain, we can fix one change address without losing privacy. We set the default address to be the change address.   
+> Unlike BIP 44, none of the shielded key paths have a `change` path level. The use of change addresses in Bitcoin is a (failed) attempt to increase the difficulty of tracking users on the transaction graph, by segregating external and internal address usage. Shielded addresses are never publicly visible in transactions, which means that sending change back to the originating address is indistinguishable from using a change address.
+> cited from [ZIP-32](https://zips.z.cash/zip-0032#key-path-levels)
+
+Finally, every account has 2^88 available diversified payment addresses belonging to the same spending authority. _Default payment address_ is indexed by 0.
 
 For a `secret` seed, Orchard master key and master chaincode is generated as follows.  
 
@@ -101,17 +104,14 @@ Given a pair of secret key `sk` and a chain code `c`, `i`-th Orchard child key i
 
 ```python  
 assert i < 2**31
-I := Blake2b_512(b"Zcash_ExpandSeed", c || [0x81] || sk || i.to_bytes(length=4, endian="little"))  
+i_bytes := i.to_bytes(length=4, endian="little")
+I := Blake2b_512(b"Zcash_ExpandSeed", c || [0x81] || sk || i_bytes)  
 sk_i, c_i := I[0:32],I[32:64]   
 ```  
 
 ## Key components  
 
-_Spending key_ `sk` is used as a seed for generating Orchard key components. Components are derived hierarchically as illustrated below.  
-
-<img src="keys.png" alt="key structure" width="600"/>  
-
-Here is the table of key components with detailed names and comments.  
+_Spending key_ `sk` is used as a seed for generating Orchard key components. The table bellow is an exhaustive list of Orchard key components.
 
 | Symbol | Name                          | Comment |  
 |--------|-------------------------------|--------------------------------------------------|  
@@ -127,12 +127,11 @@ Here is the table of key components with detailed names and comments.
 | `pk_d` | diversified transmission key  | |  
 | `addr` | diversified payment address    | is the pair `(d,pk_d)`  |  
 
+Components are derived hierarchically as illustrated bellow.
 
-Here is the illustrative pseudocode for key components derivation. See Zcash's documentation for details.
+<img src="keys.png" alt="key structure" width="600"/>  
 
-- Function `sinsemilla_commit` is a basically Pedersen commitment optimized for Halo2 proof system.
-- Function `hash_to_curve` is a constant-time hashing to Pallas curve based on Balke2b and  elliptic curve isogenies.
-- Integer `r` is the Pallas scalar field and integer `q` is the Pallas base field.
+The diagram above corresponds to the following definitions:
 
 ```python  
 PRF(sk, m) := Blake2b_512(b"Zcash_ExpandSeed", sk || m)  
@@ -159,6 +158,12 @@ gen_diversified_address(j, dk, ivk) := do
     pk_d    := [ivk]G_d  
     return (d,pk_d)  
 ```   
+
+where
+
+- Function `sinsemilla_commit` is a basically Pedersen commitment optimized for Halo2 proof system.
+- Function `hash_to_curve` is a constant-time hashing to Pallas curve based on Balke2b and  elliptic curve isogenies.
+- Integer `r` is the Pallas scalar field and integer `q` is the Pallas base field.
 
 <img src="exposure.png" alt="key exposure" width="700">  
 
