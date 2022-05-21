@@ -10,7 +10,7 @@ The goal of this document is to explain how Zcash Orchard shielded transactions 
 
 I use `inline code font` for names of types and variables. I write `type[n]` for an array of type `type` and length `n`. I write only `type[]`, if the length of the array is obvious from the context.
 
-I write python-styled pseudocode for illustrative purposes. Note that `+` is byte array concatenation and `x*G` is scalar multiplication on the curve.
+I ilustrate some schemes with pseudocode, where `:=` denotes a definition, `||` denotes concatenation and `[x]G` denotes multiplication of point `G` by scalar `x`.
 
 ## Structure of this document
 
@@ -131,17 +131,16 @@ _A change address_ is an address where a payer returns the rest of his unspent i
 For a `secret` seed, Orchard master key and master chaincode is generated as follows.  
 
 ```python
-I = Blake2b_512(b"ZcashIP32Orchard", secret)  
-sk_m, c_m = I[:32],I[32:]   
+I := Blake2b_512(b"ZcashIP32Orchard", secret)  
+sk_m, c_m := I[0:32], I[32:64]   
 ```  
 
 Given a pair of secret key `sk` and a chain code `c`, `i`-th Orchard child key is generated as follows:  
 
 ```python  
-if i < 2**31:  
-    raise ValueError("All Orcarhd secret keys must be hardened.")  
-I = Blake2b_512(b"Zcash_ExpandSeed", c + [0x81] + sk + i.to_bytes())  
-sk_i, c_i = I[:32],I[32:]   
+assert i < 2**31
+I := Blake2b_512(b"Zcash_ExpandSeed", c || [0x81] || sk || i.to_bytes(length=4, endian="little"))  
+sk_i, c_i := I[0:32],I[32:64]   
 ```  
 
 ## Key components  
@@ -167,33 +166,35 @@ Here is the table of key components with detailed names and comments.
 | `addr` | diversified payment address    | is the pair `(d,pk_d)`  |  
 
 
-Here is the illustrative pseudocode for key components derivation. See Zcash's documentation for details. `sinsemilla_commit` and `hash_to_curve` are complex functions based on algebraic hash functions and elliptic curve isogenies. `r` is the Pallas scalar field and `q` is the Pallas base field.
+Here is the illustrative pseudocode for key components derivation. See Zcash's documentation for details.
+
+- Function `sinsemilla_commit` is a basically Pedersen commitment optimized for Halo2 proof system.
+- Function `hash_to_curve` is a constant-time hashing to Pallas curve based on Balke2b and  elliptic curve isogenies.
+- Integer `r` is the Pallas scalar field and integer `q` is the Pallas base field.
 
 ```python  
-# + is concatenation  
-def PRF(sk, m):  
-    return Blake2b_512(b"Zcash_ExpandSeed", sk + m)  
+PRF(sk, m) := Blake2b_512(b"Zcash_ExpandSeed", sk || m)  
 
-ask  = PRF(sk, [0x06]) mod r  
+ask  := PRF(sk, [0x06]) mod r  
 
-ak   = ask*G # G is the Pallas generator  
-nk   = PRF(sk, [0x07]) mod q  
-rivk = PRF(sk, [0x08]) mod r  
+ak   := [ask]G # G is a Pallas generator  
+nk   := PRF(sk, [0x07]) mod q  
+rivk := PRF(sk, [0x08]) mod r  
 
-fvk = (ak,nk,rivk)  
+fvk  := (ak,nk,rivk)  
 
-ivk  = sinsemilla_commit(rivk, ak, nk)  
+ivk  := sinsemilla_commit(rivk, ak, nk)  
 
-I    = PRF(rivk, [0x82] + ak + nk)   
-dk   = I[:32]  
-ovk  = I[32:]  
+I    := PRF(rivk, [0x82] || ak || nk)   
+dk   := I[ 0:32]  
+ovk  := I[32:64]  
 
 
-def gen_diversified_address(j, dk, ivk):  
-    j_bytes = int_to_bytes(j, byte_length=11, signed=False)  
-    d = FF1_AES_256.encrypt(dk_i, b"", j_bytes)  
-    G_d = hash_to_curve(d)  
-    pk_d = ivk*G_d  
+gen_diversified_address(j, dk, ivk) := do  
+    j_bytes := int_to_bytes(j, byte_length=11, signed=False)  
+    d       := FF1_AES_256.encrypt(dk_i, b"", j_bytes)  
+    G_d     := hash_to_curve(d)  
+    pk_d    := [ivk]G_d  
     return (d,pk_d)  
 ```   
 
@@ -213,20 +214,20 @@ _source: @Josh, 13.5.2021, #ecc-trezor slack channel_
 
 In a shortcut:
 
-```
-ua_bytes = address_1 || ... || address_n
-address = compatSize(typecode) || compatSize(length) || key
-# length = byte length of a key
-typecode = 0x03 # for Orchard
-           0x02 # for Sapling
-           0x01 # for transparent P2SH
-           0x00 # for transparent P2PKH
+```python
+ua_bytes := address_1 || ... || address_n
+address  := compatSize(typecode) || compatSize(length) || key
+# length := byte length of a key
+typecode := 0x03 # for Orchard
+            0x02 # for Sapling
+            0x01 # for transparent P2SH
+            0x00 # for transparent P2PKH
 
-hrp = "u"     # for mainnet
-      "utest" # for testnet
-padding = hrp + [0x00]*(16 - len(hrp))
-ua_encoded = F4Jumble(ua_bytes || padding)
-unified_address = hrp || Bech32m(ua_encoded)
+hrp := "u"     # for mainnet
+       "utest" # for testnet
+padding := hrp || [0x00]*(16 - len(hrp))
+ua_encoded := F4Jumble(ua_bytes || padding)
+unified_address := hrp || Bech32m(ua_encoded)
 ```
 
 where `F4Jumble` is an unkeyed 4-round Feistel construction to approximate a random permutation described in [ZIP 316](https://github.com/zcash/zips/blob/main/zip-0316.rst). This function makes it computationally impossible to generate two lexicographically close addresses. Therefore it should be sufficient to check only first 16 bytes when spending to UA (**not confirmed, just my reasoning**).
@@ -268,14 +269,8 @@ Without knowledge of the nullifier key `nk`, nullifier is not linkable to its No
 Next, a random Pallas scalar `alpha` is generated (in the Trezor). `alpha` is then used to randomize spend validating key `ak`. This randomized spend validating key (called `rk`) is part of an _Action_ description.
 
 ```python
-rk = alpha*G + ak
+rk := [alpha]G + ak
 ```
-
-`alpha` should be generated in Trezor. Otherwise we cannot guarantee privacy features.
-
-`rk` and `nf` could be computed by the Host.
-
-On the other side, computing `nf` and `rk` in the Trezor raises the implementation security and it simplifies the protocol. Hence we will compute the nullifier in the Trezor, if no fundamental barrier appears.
 
 ## Orchard Actions  
 
@@ -320,15 +315,11 @@ We don't consider this issue to be important. Backward proof randomness checking
 To detect incoming Notes, a Host must try to decrypt every new shielded Note in the blockchain using incoming viewing key `ivk`. Notes are encrypted by `AEAD_CHACHA20_POLY1305`, which returns integrity error for inappropriate keys. You can find illustrative python pseudocode bellow.   
 
 ```python  
-def get_incoming_notes(ivk, block):  
-    for (C_enc, epk) in block:  
-        shared_key = Pallas.multiply(scalar=ivk, point=epk)  
-        KDF_input  = shared_key + epk  # + is concatenation  
-        symetric_key = Blake2b_256("Zcash_OrchardKDF", KDF_input)  
-        try:  
-            yield AEAD_CHACHA20_POLY1305(symetric_key).decrypt(C_enc)  
-        except CiphertextIntegrityError:  
-            continue  
+note_trial_decryption(C_enc, epk) := do   
+        shared_key   := [ivk]epk  
+        KDF_input    := shared_key || epk  
+        symetric_key := Blake2b_256("Zcash_OrchardKDF", KDF_input)  
+        return AEAD_CHACHA20_POLY1305(symetric_key).decrypt(C_enc)  
 ```  
 
 Further, all detected incoming Notes and their merkle tree paths should be stored in the Host. The Host should not store only indexes of incoming transactions, because querying some blocks more than others reveals information about the user's transactions to the fullnode.
@@ -343,9 +334,8 @@ Our communication scheme consists of four players. User, Trezor, a Host (typical
 
 Our security goals differs according to following two scenarios:  
 
-1. Even if the **Host is malicious**, he cannot spend Zcash funds from the Trezor. However, he can violate Zcash privacy features.  
-
-2. If the **Host is honest**, then all Zcash privacy features are preserved.
+1. If the **Host is honest**, then all Zcash privacy features are preserved.
+2. Even if the **Host is malicious**, he cannot spend Zcash funds from the Trezor. However, he can violate Zcash privacy features.  
 
 Zcash privacy guarantees are for example:
 
