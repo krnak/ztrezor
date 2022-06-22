@@ -5,11 +5,11 @@ use std::io::{self, Read, Write};
 //use nonempty::NonEmpty;
 use orchard::{
     builder::{InProgress, SigningMetadata, Unauthorized, Unproven},
-    bundle::{Action, Authorization, Authorized, Flags},
+    bundle::{Authorization, Authorized, Flags},
     note::{ExtractedNoteCommitment, Nullifier, TransmittedNoteCiphertext},
     primitives::redpallas::{self, SigType, Signature, SpendAuth, VerificationKey},
     value::ValueCommitment,
-    Anchor,
+    Action, Anchor,
 };
 //use zcash_encoding::{Array, CompactSize, Vector};
 

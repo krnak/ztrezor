@@ -1,11 +1,11 @@
 use crate::{utils::unhexlify, write_v5_bundle::write_v5_bundle};
 use bech32::{self, ToBase32, Variant};
 use f4jumble;
-use incrementalmerkletree::{bridgetree::BridgeTree, Frontier, Position, Tree};
+use incrementalmerkletree::{bridgetree::BridgeTree, Frontier, Hashable, Position, Tree};
 use orchard::{
     builder::Builder,
     bundle::{commitments::hash_bundle_txid_data, Bundle, Flags},
-    keys::{FullViewingKey, OutgoingViewingKey, SpendingKey},
+    keys::{FullViewingKey, OutgoingViewingKey, Scope, SpendingKey},
     note::{Note, Nullifier},
     tree::{MerkleHashOrchard, MerklePath},
     value::NoteValue,
@@ -37,11 +37,10 @@ pub fn main() {
     ];
     let sk = SpendingKey::from_zip32_seed(&key_seed, 1, 0).unwrap();
     let fvk: FullViewingKey = (&sk).into();
-    let ifvk = fvk.derive_internal();
-    let ovk: OutgoingViewingKey = (&fvk).into();
-    let iovk: OutgoingViewingKey = (&ifvk).into();
-    let iaddress = ifvk.address_at(0u32);
-    let address_1 = fvk.address_at(0u32);
+    let ovk: OutgoingViewingKey = fvk.to_ovk(Scope::External);
+    let iovk: OutgoingViewingKey = fvk.to_ovk(Scope::Internal);
+    let iaddress = fvk.address_at(0u32, Scope::Internal);
+    let address_1 = fvk.address_at(0u32, Scope::External);
     //let address_2 = fvk.address_at(1u32);
 
     let mut rng = ChaCha12Rng::from_seed([0u8; 32]);
@@ -73,18 +72,21 @@ pub fn main() {
         .iter()
         .map(|(_, note)| MerkleHashOrchard::from_cmx(&note.commitment().into()))
         .collect();
+
     //authentication_path
+    let mut positions = vec![];
     for leaf in leafs.iter() {
         tree.append(leaf);
-        tree.witness();
+        let pos = tree.witness().expect("tree is not empty");
+        positions.push(pos);
     }
-    let anchor = tree.root();
-    let paths: Vec<MerklePath> = leafs
+    let anchor = tree.root(0).unwrap();
+    let paths: Vec<MerklePath> = positions
         .into_iter()
-        .enumerate()
-        .map(|(i, leaf)| {
-            let pos = Position::from(i);
-            let path = tree.authentication_path(pos, &leaf).unwrap();
+        .map(|pos| {
+            let path = tree
+                .authentication_path(pos, &anchor)
+                .expect("auth path does not exists");
             (pos, path).into()
         })
         .collect();
@@ -103,11 +105,13 @@ pub fn main() {
     let mut rng = ChaCha12Rng::from_seed(seed.clone());
 
     let bundle: Bundle<_, i64> = builder.build_online(&mut rng).unwrap();
+    println!("rng pos: {:?}", rng.get_word_pos());
 
     let txid = hash_bundle_txid_data(&bundle);
     let mut serialized: Vec<u8> = vec![];
     write_v5_bundle(Some(&bundle), &mut serialized).unwrap();
 
+    println!("=== tv shielding synchronization ===");
     println!("tx = SignTx(");
     println!("\tinputs_count = 0,");
     println!("\toutputs_count = 0,");
