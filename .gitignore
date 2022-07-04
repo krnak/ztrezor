@@ -1,2 +1,6 @@
 testvectors/target
 testvectors/Cargo.lock
+client/target
+client/Cargo.lock
+block_db
+wallet_db
