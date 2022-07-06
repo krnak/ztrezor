@@ -4,7 +4,9 @@
 
 <img src="interactions.png" alt="Trezor - Host - User - full node interactions" width="600"/>  
 
-Our communication scheme consists of four players. User, Trezor, a Host (typically a PC or a cell phone) and Zcash fullnode (a server maintaining a full blockchain copy).  
+Our communication scheme consists of four players: an user, a hardware wallet (HWW), a host (typically a PC or a cell phone) and Zcash fullnode (a server maintaining a full blockchain copy).
+
+Threat model for host<->fullnode communication is well-described in [Zcash doc](https://zcash.readthedocs.io/en/latest/rtd_pages/wallet_threat_model.html). In this section we focus only to the communication between the host, the user and the HWW.
 
 Our security goals differs according to following two scenarios:  
 
