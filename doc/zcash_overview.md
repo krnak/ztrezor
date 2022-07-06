@@ -250,13 +250,13 @@ Second, every spend must be authorized by a (spend authorizing) signature. In or
 rk := ak + [alpha]G
 ```
 
-Signature is then made by corecponding randomized spending key `ask + alpha`. Recall here that `ak := [ask]G` and thus
+This relation is forced by zk-proof. Recall here that `ak := [ask]G` and thus
 
 ```python
-rk = [ask]G + [alpha]G = [ask + alpha]G 
+rk = [ask]G + [alpha]G = [ask + alpha]G.
 ```
 
-The relation `rk = ak + [alpha]G` is forced by zk-proof.
+Therefore coresponding randomized spending key is `ask + alpha`.
 
 ## Orchard Actions  
 
