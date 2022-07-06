@@ -11,21 +11,18 @@ Our security goals differs according to following two scenarios:
 1. If the **Host is honest**, then all Zcash privacy features are preserved.
 2. Even if the **Host is malicious**, he cannot spend Zcash funds from the Trezor. However, he can violate Zcash privacy features.  
 
-Zcash privacy guarantees are for example:
-
-- **Shielded address unlinkability:** Two shielded addresses with the same spending authority cannot be linked (without knowledge of Incoming Viewing Key).  
-
-- **Transaction graph shielding:** As in Bitcoin, every shielded input corresponds to some shielded output. However this correspondence is unrecognizable (without knowledge of Incoming Viewing Key for a particular tuple).
-
-- **Amount privacy:** Given a shielded input (resp. output), nobody can compute how many ZECs were spent (resp. sent).
-
 ## Comparison with the Ledger
 
 - We implement Orchard shielded protocol, while Ledger implemented the Sapling shielded protocol.
 - We have no control over the proof randomness. (Ledger maybe wont too after the NU5.)
 - We don't have to worry about memory optimizations so much.
 
-## Data flow
+## Efficiency and memory analysis
+
+#### Field and Pallas
+Orchard uses arithmetics in 255-bit finite fiald Fp. Maximally efficient implementation of Fp
+
+## Shortened shielding flow
 
 ![shielding data flow](shielding_flow.png)
 
@@ -53,6 +50,31 @@ Zcash libraries are now available in Rust. I would like to use them directly as 
 | [reddsa](https://github.com/str4d/redjubjub) | :heavy_check_mark: | :heavy_check_mark: |
 | [fpe](https://github.com/str4d/fpe) | in progress | :heavy_check_mark: |
 | poseidon | almost | almost |
+
+## Zcash codebase analysis
+
+Zcash repositores relevant to this project are generally written in Rust.
+#### Orchard
+- [librustzcash]()
+  - [zcash_note_encryption]()
+  - [f4jumble]()
+- [orchard]()
+- [reddsa]()
+- [pasta_curves]()
+- [halo2_gadgets]()
+- [halo2_proofs]()
+- [incrementalmerkletree]()
+
+#### Cryptography
+- [ff]()
+- [group]()
+- [fpe]()
+- [subtle]()
+
+#### Wallet
+- [zcashd]() / [zebrad]()
+- [lightwalletd]()
+- [zingolib]()
 
 ## `trezorlib` implementation
 
