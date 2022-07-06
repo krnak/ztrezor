@@ -1,6 +1,4 @@
-# Zcash overview
-
-Content:
+# Zcash analysis
 
 - [Shielded transactions](#shielded-transactions)
 - [Pallas and Vesta curves](#pallas-and-vesta-curves)
@@ -14,6 +12,13 @@ Content:
 - [Blockchain scanning](#blockchain-scanning)
 - [Transaction fields](#transaction-fields) and
 - [Action description fields](#action-description-fields)
+
+
+### Notation
+
+I use `inline code font` for names of types and variables. I write `type[n]` for an array of type `type` and length `n`. I write only `type[]`, if the length of the array is obvious from the context.
+
+I ilustrate some schemes with pseudocode, where `:=` denotes a definition, `||` denotes concatenation and `[x]G` denotes multiplication of point `G` by scalar `x`.
 
 ## Shielded transactions  
 
