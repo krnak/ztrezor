@@ -270,6 +270,12 @@ Both, set of input Notes and set output Notes, can be padded by _Dummy Notes_, t
 
 _source: NU5 doc § 4.7.3_
 
+## Shielding flow
+
+I ilustrate shielding process below. `$` denotes input randomness. The nullifier computation part of the picture could be confusing. In the picture, I create and nullify the same Note, whereas within an Action one Note is nullified and another Note is created.
+
+![shielding](shielding.png)
+
 ## Transaction authorization  
 
 Shielded part of a transaction is authorized by  
