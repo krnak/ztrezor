@@ -2,7 +2,7 @@
 
 - [Shielded transactions](#shielded-transactions)
 - [Pallas and Vesta curves](#pallas-and-vesta-curves)
-- [ZIP32](#zip32)
+- [ZIP-32](#zip-32)
 - [Key components](#key-components)
 - [Unified addresses](#unified-addresses)
 - [Spending (input) notes](#spending-input-notes)
@@ -10,7 +10,7 @@
 - [Orchard Actions](#orchard-actions)
 - [Transaction authorization](#transaction-authorization)
 - [Blockchain scanning](#blockchain-scanning)
-- [Transaction fields](#transaction-fields) and
+- [Transaction fields](#transaction-fields)
 - [Action description fields](#action-description-fields)
 
 
@@ -42,7 +42,7 @@ There are three consecutive versions of Zcash shielded protocol: Sprouts, Saplin
 
 - Sapling (2018) integrated many circuit optimizations using algebraic hash functions over the JubJub curve. Further it brought major restructuralizations of key components and shielded data.
 
-- Orchard (2021) introduced a recursive Halo2 zk-proving protocol and several additional circuit and structural changes.  
+- Orchard (2021) introduced a recursive Halo2 transparent recursive zk-proofs and several additional circuit and structural optimiations.  
 
 <img src="versions.png" alt="versions" width="700"/>
 
@@ -50,7 +50,7 @@ _transaction structure for different shielded protocols_
 
 Each of these protocols has its own privacy pool, e.i. privacy set of all funds currently shielded by the protocol. The more funds were shielded by the protocol, the higher level of privacy pool reaches.  
 
-Since Sprouts depreciation is scheduled (2022), users are forced to migrate their shielded funds into Sapling pool. Otherwise they will lose them irrevocably.
+Since Sprouts depreciation is scheduled (2022), users are forced to migrate their shielded funds into newer pools. Otherwise they will lose them irrevocably.
 
 Multiple shielded protocols can be used within one transaction as illustrated below.
 
@@ -60,7 +60,7 @@ Through this document, I consider a transaction that contains only transparent i
 
 ## Pallas and Vesta curves
 
-Orchard uses a pair of elliptic curves _Pasta_ and _Vesta_. These Weierstrass curves defined by equation
+Orchard uses a pair of elliptic curves _Pasta_ and _Vesta_. These Weierstrass curves are defined by equation
 
 ```
 y^2 = x^3 + 5
@@ -75,9 +75,11 @@ r = 0x40000000000000000000000000000000224698fc0994a8dd8c46eb2100000001
 
 Integer `q` is the size of the base field of Pallas and scalar field of Vesta. Integer `r` is the size of the base field of Vesta and scalar field of Pallas.
 
-These two curves were designed by Zcash cryptographers. They are documented on [github](https://github.com/zcash/pasta). All Orchard's cryptography runs over the Pallas curve. Vesta is used only during a proof computation.
+These two curves were designed by Zcash cryptographers with focus to Halo2 efficiency. They are documented on [github](https://github.com/zcash/pasta). All Orchard's cryptography runs over the Pallas curve. Vesta is used only during a proof computation and verification.
 
-## ZIP32  
+## ZIP-32
+
+Orchard spending keys are derived deterministically and hiearchically. Key derivation mechanism is simillar to BIP-32. It is described in [ZIP-32](https://zips.z.cash/zip-0032).
 
 Paths of Orchard keys are of type  
 
@@ -111,7 +113,7 @@ Given a pair of secret key `sk` and a chain code `c`, `i`-th Orchard child key i
 assert i < 2**31
 i_bytes := i.to_bytes(length=4, endian="little")
 I := Blake2b_512(b"Zcash_ExpandSeed", c || [0x81] || sk || i_bytes)  
-sk_i, c_i := I[0:32],I[32:64]   
+sk_i, c_i := I[0:32], I[32:64]   
 ```  
 
 ## Key components  
@@ -122,15 +124,15 @@ _Spending key_ `sk` is used as a seed for generating Orchard key components. The
 |--------|-------------------------------|--------------------------------------------------|  
 | `ask`  | spend authorizing key         | Enables to spend funds from the address. Never leaves the Trezor.  |  
 | `ak`   | spend validating key          | public key for `ask`  |  
-| `nk`   | nullifier deriving key        | |  
-| `rivk` |                               | some between-product randomness |  
+| `nk`   | nullifier deriving key        | Enables to generate Note nullifiers. More about nullifiers [bellow](#spending-input-notes). |  
+| `rivk` |                               | Hiding factor for `ivk` derivation. |  
 | `fvk`  | full viewing key              | is the triple `(ak,nk,rivk)` | Enables to prove transaction correctness and to derive other keys. Leaves the Trezor.  |  
 | `ivk`  | incoming viewing key          | Enables to detect and decrypt all incoming Notes.  |  
 | `ovk`  | outgoing viewing key          | Enables to decrypt Notes sent from this account. This feature is optional, but force-enabled in Trezor. |  
-| `dk`   | diversifier deriving key      | Enables do derive diversifiers.  |  
+| `dk`   | diversifier deriving key      | Enables do derive diversifiers.  |
+| `addr` | diversified payment address    | is the pair `(d,pk_d)`  |  
 | `d`    | address diversifier           | |  
 | `pk_d` | diversified transmission key  | |  
-| `addr` | diversified payment address    | is the pair `(d,pk_d)`  |  
 
 Components are derived hierarchically as illustrated bellow.
 
@@ -155,22 +157,20 @@ I    := PRF(rivk, [0x82] || ak || nk)
 dk   := I[ 0:32]  
 ovk  := I[32:64]  
 
+# derivation of j-th diversifier
+d(j) := FF1_AES_256.encrypt(dk, b"", j.to_bytes(length=11, signed=False))
 
-gen_diversified_address(j, dk, ivk) := do  
-    j_bytes := int_to_bytes(j, byte_length=11, signed=False)  
-    d       := FF1_AES_256.encrypt(dk_i, b"", j_bytes)  
+gen_address(d, ivk) := do
     G_d     := hash_to_curve(d)  
-    pk_d    := [ivk]G_d  
-    return (d,pk_d)  
+    pk_d    := [ivk]G_d
+    return (d, pk_d)
 ```   
 
 where
 
 - Function `sinsemilla_commit` is a basically Pedersen commitment optimized for Halo2 proof system.
-- Function `hash_to_curve` is a constant-time hashing to Pallas curve based on Balke2b and  elliptic curve isogenies.
+- Function `hash_to_curve` is a constant-time hashing to Pallas curve based on Balke2b and elliptic curve isogenies.
 - Integer `r` is the Pallas scalar field and integer `q` is the Pallas base field.
-
-<img src="exposure.png" alt="key exposure" width="700">  
 
 ## Unified addresses
 
@@ -178,13 +178,13 @@ where
 
 Unified addresses (UAs) are one of NU5 features. They enable a user to share his transparent and shielded payment addresses in one standardized bundle. UAs are well described in [ZIP 316](https://github.com/zcash/zips/blob/main/zip-0316.rst).
 
-Although UAs are not an indispensable feature, we want to support them and they are part of the grant description.
+Unified addresses must be supported by Trezor, since it is the only format for Orchard address encoding.
 
 > We'd also be up for strong marketing in support of Trezor supporting Unified Addresses out of the gate.
 
 _source: @Josh, 13.5.2021, #ecc-trezor slack channel_
 
-In a shortcut:
+In a nutshell, an unified address is type-length-value encoded bundle of multiple addresses.
 
 ```python
 ua_bytes := address_1 || ... || address_n
@@ -202,7 +202,7 @@ ua_encoded := F4Jumble(ua_bytes || padding)
 unified_address := hrp || Bech32m(ua_encoded)
 ```
 
-where `F4Jumble` is an unkeyed 4-round Feistel construction to approximate a random permutation described in [ZIP 316](https://github.com/zcash/zips/blob/main/zip-0316.rst). This function makes it computationally impossible to generate two lexicographically close addresses. Therefore it should be sufficient to check only first 16 bytes when spending to UA (**not confirmed, just my reasoning**).
+where `F4Jumble` is an unkeyed 4-round Feistel construction to approximate a random permutation described in [ZIP-316](https://github.com/zcash/zips/blob/main/zip-0316.rst). This function makes it computationally impossible to generate two lexicographically close addresses. Therefore it should be sufficient to check only first 16 bytes when spending to UA (not confirmed, just my reasoning).
 
 UA's components are ordered by priority according to this priority list:
 
@@ -212,37 +212,51 @@ UA's components are ordered by priority according to this priority list:
 
 Each address type (Orchard, Sapling, transparent) may be included only once. Otherwise UA will be rejected. UA containing only a transparent address will be rejected.
 
-TODO: autoshielding feature
+### Auto-shielding
 
-TODO: UA requirements
+A wallet that supports a shielded protocol can increase user's privacy by auto-shielding. This means that the wallet forwards funds received to its transparent address to its shielded address automatically.
 
 ## Sending (output) Notes  
 
-In Zcash terminology, the user sends and receives _Notes_. To send a Note, user chooses Note's value `v`, Note's receiver address `addr` and (an optional) Note's arbitrary comment `memo`.  
+In Zcash terminology, the user sends and receives _Notes_. To send a Note, user chooses Note's value `v`, Note's receiver address `addr` and (an optional) Note's arbitrary comment `memo` (a message for the recipient).  
 
-To create and send a new Note, user shields the Note, using a randomness `rseed` and `rcv`, getting a tuple (`cm`, `cv`, `C_enc`, `C_out`, `epk`). This tuple is recorded to the blockchain.  
+To create and send a new Note, user shields the Note, using some randomness, getting a tuple (`cm`, `cv`, `C_enc`, `C_out`, `epk`). This tuple is then recorded to the blockchain.  
 
-- `cm` - Note commitment  
-- `cv` - value commitment  
-- `C_enc` - Note encryption for a recipient  
-- `C_out` - Note encryption for a sender (optional)  
-- `epk` - ephemeral key for a Diffie-Helman key exchange  
+- `cm` - Note commitment - enables Note to be spend later  
+- `cv` - value commitment - enables to verify balance of the transaction
+- `C_enc` - Note ciphertext - contains Note value, recipient address, Note randomizers and memo  
+- `C_out` - Receipt - enables a sender to decrypt `C_enc` (optional)  
+- `epk` - ephemeral key - enables recipient to decrypt `C_enc`   
 
-All these components must be computed in Trezor. It is the simplest way how Trezor can validate integrity and randomizations of all these components.
+All these components (except `cv`) must be computed in Trezor. It is the simplest way how Trezor can validate integrity and randomizations of all these components. Validity of `cv` is forced by validity of binding signature, whose validity is forced by consensus.
 
 ## Spending (input) Notes  
 
-When user is spending a Note, the only information related to the Note he must reveal within a shielded transaction is the Note's _nullifier_ `nf_new`, computed from the input Note's data `(cm, rseed, nf_old)` and user's nullifier key `nk`.
+When user is spending a Note, the only information related to the Note he must reveal within a shielded transaction is the Note's _nullifier_. Nullifier serves as the serial number of the Note. Once the nullifier is revealed within a valid transaction, Note is spent and any other transaction attempting to spend with the same nullifier will be rejected. Without knowledge of the nullifier key `nk`, nullifier is not linkable to its Note. Thus a Note sender cannot observe Note spend.
 
-Nullifier serves as the serial number of a Note. Once the nullifier is revealed within a valid transaction, Note is spent and any other transaction attempting to spend with the same nullifier will be refused.
+A Note nullifier `nf_new` is computed from the input Note's data `(cm, rseed, nf_old)` and user's nullifier key `nk` as follows:
 
-Without knowledge of the nullifier key `nk`, nullifier is not linkable to its Note. Hence nobody (including a Note sender), given a nullifier, can distinguish which Note was spent.  
+```
+rho    := nf_old
+psi    := BLAKE2b-512("Zcash_ExpandSeed", rseed || 0x09 || rho ) mod p
+nf_new := ([(Poseidon(nk, rho) + psi) mod p]G + cm).x
+```
 
-Next, a random Pallas scalar `alpha` is generated (in the Trezor). `alpha` is then used to randomize spend validating key `ak`. This randomized spend validating key (called `rk`) is part of an _Action_ description.
+where `Poseidon` is the algebraic hash function and `.x` denotes extraction of the first coordinate of a point on the Pallas.
+
+Second, every spend must be authorized by a (spend authorizing) signature. In order to make verification of this signature publicly verifiable, randomized version of `ak` is attached to each spend. In particular, a random Pallas scalar `alpha` is generated and randoized spend validating key is derived as follows:
 
 ```python
-rk := [alpha]G + ak
+rk := ak + [alpha]G
 ```
+
+Signature is then made by corecponding randomized spending key `ask + alpha`. Recall here that `ak := [ask]G` and thus
+
+```python
+rk = [ask]G + [alpha]G = [ask + alpha]G 
+```
+
+The relation `rk = ak + [alpha]G` is forced by zk-proof.
 
 ## Orchard Actions  
 
@@ -289,14 +303,13 @@ To detect incoming Notes, a Host must try to decrypt every new shielded Note in 
 ```python  
 note_trial_decryption(C_enc, epk) := do   
         shared_key   := [ivk]epk  
-        KDF_input    := shared_key || epk  
-        symetric_key := Blake2b_256("Zcash_OrchardKDF", KDF_input)  
+        symetric_key := Blake2b_256("Zcash_OrchardKDF", shared_key || epk)  
         return AEAD_CHACHA20_POLY1305(symetric_key).decrypt(C_enc)  
 ```  
 
 Further, all detected incoming Notes and their merkle tree paths should be stored in the Host. The Host should not store only indexes of incoming transactions, because querying some blocks more than others reveals information about the user's transactions to the fullnode.
 
-The optimal approach would be to use Zcash light client, which uses some optimizations and batching techniques to reach maximal efficiency.
+The `zecwallet-light-cli` uses many optimizations and batching techniques to reach maximal efficiency and privacy while scanning a blockchain.
 
 ## Transaction fields
 
