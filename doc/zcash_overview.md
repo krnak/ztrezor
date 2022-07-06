@@ -8,6 +8,7 @@
 - [Spending (input) notes](#spending-input-notes)
 - [Sending (output) notes](#sending-output-notes)
 - [Orchard Actions](#orchard-actions)
+- [Shielding flow](#shielding-flow)
 - [Transaction authorization](#transaction-authorization)
 - [Blockchain scanning](#blockchain-scanning)
 - [Transaction fields](#transaction-fields)
