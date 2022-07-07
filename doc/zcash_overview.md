@@ -215,7 +215,7 @@ Each address type (Orchard, Sapling, transparent) may be included only once. Oth
 
 ### Auto-shielding
 
-A wallet that supports a shielded protocol can increase user's privacy by auto-shielding. This means that the wallet forwards funds received to its transparent address to its shielded address automatically.
+A wallet that supports a shielded protocol can increase user's privacy by auto-shielding funds. This means that the wallet forwards funds received to its transparent address to its shielded address automatically.
 
 ## Sending (output) Notes  
 
