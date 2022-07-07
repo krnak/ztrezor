@@ -22,7 +22,19 @@ Our security goals differs according to following two scenarios:
 ## Efficiency and memory analysis
 
 #### Field and Pallas
-Orchard uses arithmetics in 255-bit finite fiald Fp. Maximally efficient implementation of Fp
+Orchard uses arithmetics in 255-bit finite fiald Fp. Crate `pasta_curves` contains very efficient `no_std`-compatible implementation of Fp and of Pallas elliptic curve. Crate uses standard speed-up techniques like Montgomery reductions and projective coordinates.
+
+Squaring in Fp is optimized by large pre-computed tables. Crate also contains a (`no_std` compatible) table-less squaring implemented via Tonelli–Shanks' square-root algorithm[[1](https://eprint.iacr.org/2012/685.pdf)] for `p mod 16 = 1`. Squaring is necessary for hashing to the curve.
+
+Hashing to the Pallas is realized by simplified version of SWU algoritm. Since `a = 0` for Pallas, algoritm first hashes a messages to the different curve and the maps the point to the Pallas by curve isogeny.
+
+Hashing requires: TODO
+Isogeny computation requires: TODO
+
+#### ZIP-32
+#### Address generation
+#### Shielding
+
 
 ## Shortened shielding flow
 
