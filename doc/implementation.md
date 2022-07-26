@@ -28,6 +28,7 @@ Squaring in Fp is optimized by large pre-computed tables. Crate also contains a 
 
 Hashing to the Pallas is realized by simplified version of SWU algoritm. Since `a = 0` for Pallas, algoritm first hashes a messages to the different curve and the maps the point to the Pallas by curve isogeny.
 
+Tonelli-Shanks: 822 multiplications
 Hashing requires: TODO
 Isogeny computation requires: TODO
 
