@@ -4,3 +4,8 @@ client/target
 client/Cargo.lock
 block_db
 wallet_db
+python/__pycache__
+witness_getter/target
+witness_getter/Cargo.lock
+verify_signature/target
+verify_signature/Cargo.lock

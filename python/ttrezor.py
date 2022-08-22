@@ -104,7 +104,8 @@ txs= [{
 TXHASH_0369ea = bytes.fromhex("0590332a59117c66d5b59d73f042f2e4ad55a8f4e4c047bfab07b72710737cc9")
 binp1 = messages.TxInputType(
     # tmQoJ3PTXgQLaRRZZYT6xk8XtjRbr2kCqwu
-    address_n=parse_path("m/44h/1h/0h/0/0"),
+    #address_n=parse_path("m/44h/1h/0h/0/0"),
+	address_n=parse_path("m/44h/133h/0h/0/0"),
     amount=300000000,
     prev_hash=TXHASH_0369ea,
     prev_index=0,
@@ -112,7 +113,8 @@ binp1 = messages.TxInputType(
 )
 
 bout1 = messages.TxOutputType(
-    address="tmJ1xYxP8XNTtCoDgvdmQPSrxh5qZJgy65Z",
+    #address="tmJ1xYxP8XNTtCoDgvdmQPSrxh5qZJgy65Z",
+	address="u1qld9m8deq56mpvma9gpvm5ths62f9fcqa9udwn7jvjts3msldpet509nnuguvl6zq0atz9s8t53wm207zq2xyhawanjg4xt2yzqvuwt6kzx2lzzmk9w45mlh6vmacmywmeh6c584t8u",
     amount=300000000 - 2000,
     script_type=messages.OutputScriptType.PAYTOADDRESS,
 )
@@ -121,7 +123,8 @@ bout1 = messages.TxOutputType(
 client = get_default_client()
 sigs, ser = btc.sign_tx(
 	client,
-	"Zcash Testnet",
+	#"Zcash Testnet",
+	"Zcash",
 	[binp1], #[ainp1, ainp2], #[inp1],
 	[bout1], #[aout1], #[out1, out2, out3],
     version=5,

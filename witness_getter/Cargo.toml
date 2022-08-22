@@ -1,0 +1,23 @@
+[package]
+name = "witness_getter"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+tokio =  { version = "1.6.0", features = ["full"] }
+http = "0.2.4"
+zcash_primitives = { git = "https://github.com/zingolabs/librustzcash", rev = "e5484c96445dbff38cfb4a6e0983ade1bc0d7656", features = ["transparent-inputs", "test-dependencies"] }
+futures = "0.3.23"
+
+[dependencies.zingolib]
+path = "/home/agi/code/zingolib/lib"
+
+[dependencies.zingoconfig]
+path = "/home/agi/code/zingolib/config"
+
+[patch.crates-io]
+zcash_note_encryption = { git = "https://github.com/zingolabs/librustzcash", rev = "e5484c96445dbff38cfb4a6e0983ade1bc0d7656" }
+zcash_primitives = { git = "https://github.com/zingolabs/librustzcash", rev = "e5484c96445dbff38cfb4a6e0983ade1bc0d7656" }
+orchard = { git = "https://github.com/zingolabs/orchard", rev = "48b7dac551a9af6c194632e6a9f0ff5fb7918dcc" }
