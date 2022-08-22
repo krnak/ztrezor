@@ -4,7 +4,9 @@
 
 <img src="interactions.png" alt="Trezor - Host - User - full node interactions" width="600"/>  
 
-Our communication scheme consists of four players. User, Trezor, a Host (typically a PC or a cell phone) and Zcash fullnode (a server maintaining a full blockchain copy).  
+Our communication scheme consists of four players: an user, a hardware wallet (HWW), a host (typically a PC or a cell phone) and Zcash fullnode (a server maintaining a full blockchain copy).
+
+Threat model for host<->fullnode communication is well-described in [Zcash doc](https://zcash.readthedocs.io/en/latest/rtd_pages/wallet_threat_model.html). In this section we focus only to the communication between the host, the user and the HWW.
 
 Our security goals differs according to following two scenarios:  
 
@@ -21,7 +23,25 @@ TODO: gapped model
 - We have no control over the proof randomness. (Ledger maybe wont too after the NU5.)
 - We don't have to worry about memory optimizations so much.
 
-## Data flow
+## Efficiency and memory analysis
+
+#### Field and Pallas
+Orchard uses arithmetics in 255-bit finite fiald Fp. Crate `pasta_curves` contains very efficient `no_std`-compatible implementation of Fp and of Pallas elliptic curve. Crate uses standard speed-up techniques like Montgomery reductions and projective coordinates.
+
+Squaring in Fp is optimized by large pre-computed tables. Crate also contains a (`no_std` compatible) table-less squaring implemented via Tonelli–Shanks' square-root algorithm[[1](https://eprint.iacr.org/2012/685.pdf)] for `p mod 16 = 1`. Squaring is necessary for hashing to the curve.
+
+Hashing to the Pallas is realized by simplified version of SWU algoritm. Since `a = 0` for Pallas, algoritm first hashes a messages to the different curve and the maps the point to the Pallas by curve isogeny.
+
+Tonelli-Shanks: 822 multiplications
+Hashing requires: TODO
+Isogeny computation requires: TODO
+
+#### ZIP-32
+#### Address generation
+#### Shielding
+
+
+## Shortened shielding flow
 
 ![shielding data flow](shielding_flow.png)
 
@@ -104,3 +124,37 @@ Zcash libraries are now available in Rust. I would like to use them directly as 
 | [reddsa](https://github.com/str4d/redjubjub) | :heavy_check_mark: | :heavy_check_mark: |
 | [fpe](https://github.com/str4d/fpe) | in progress | :heavy_check_mark: |
 | poseidon | almost | almost |
+<<<<<<< HEAD
+=======
+
+## Zcash codebase analysis
+
+Zcash repositores relevant to this project are generally written in Rust.
+#### Orchard
+- [librustzcash]()
+  - [zcash_note_encryption]()
+  - [f4jumble]()
+- [orchard]()
+- [reddsa]()
+- [pasta_curves]()
+- [halo2_gadgets]()
+- [halo2_proofs]()
+- [incrementalmerkletree]()
+
+#### Cryptography
+- [ff]()
+- [group]()
+- [fpe]()
+- [subtle]()
+
+#### Wallet
+- [zcashd]() / [zebrad]()
+- [lightwalletd]()
+- [zingolib]()
+
+## `trezorlib` implementation
+
+[lightwalletd](https://github.com/zcash/lightwalletd) (coded in Go lang) can be used for communication with a full node.
+
+[halo2](https://github.com/zcash/halo2) crate (coded in Rust) will be used for proof computation.
+>>>>>>> 8c63eb92866e28917ddbf19cf00a73b8d3414246
