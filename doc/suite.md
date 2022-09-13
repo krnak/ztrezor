@@ -1,21 +1,42 @@
 # Suite requirements
 
-## Features
+## Get Zcash address UI
 
-**address generation:** User can generate three types of Zcash addresses:
-transparent, pure orchard-shielded and unified (transparent + orchard-shielded). Unified address is default.
+- [ ] Addresses are always generated with fresh index
+- [ ] By default, user gets an unified address containing a transparent address and an Orchard shielded address
+- [ ] User can get a pure transparent address.
+- [ ] User can get a pure Orchard shielded address.
 
-**memos:** User can attach a memo (512 bytes message for a recipient) to every shielded output.
 
-**autoshieding:** User can send all his transparent funds to his shielded address by clicking a button.
+## Send ZEC UI
 
-## Technical requirements
+- [ ] Address field accepts unified address.
+- [ ] Suite is able to decode an unified address to get its receivers.
+- [ ] If a unified address has Orchard receiver, then output is shielded.
+- [ ] If a unified address has not Orchard receiver, but it has some transparent receiver, then output is transparent.
+- [ ] If a unified address has no compatible receiver, address is rejected with some error message.
+- [ ] If user enters Sapling address, address is rejected with message "Sapling addresses not supported.".
+- [ ] If an output shielded, then it has an additional _memo_ field. Memo is a message for a recipient. Maximum length of memo is 512 bytes of utf8 encoded text.
 
-**lightwalletd:** SL must run a [lightwalletd](https://github.com/zcash/lightwalletd) full node backend.
+## Servers
 
-**librustzcash:** Suite app must be able to use functionalitis from [librustzcash](https://github.com/zcash/librustzcash) library.
+- [ ] SL should run Zcash full-node. I recommend using actively maintained pure rust [zebra](https://github.com/ZcashFoundation/zebra) full node. 
+- [ ] SL should run a [lightwalletd](https://github.com/zcash/lightwalletd) full node backend.
 
-**database:** Suite scans blockchain for incoming transaction and stores them in a database. One shielded UTXO is about 1kb.
+## Rust functionalities
+
+There will be a special Rust crate (`trezor_orchard`), which will enable a client to finish transaction authorization.
+
+- [ ] Suite must be able to use functionalities of `trezor_orchard` crate.
+- [ ] Unified address decoding can be imported from `librustzcash`.
+
+## Storage
+
+- [ ] Suite must be able to store all detected incoming shielded UTXOs. This requires circa 1kb per zUTXO.
+
+## Autoshielding
+
+TODO
 
 ## Related
 
