@@ -8,6 +8,7 @@ use pasta_curves::group::GroupEncoding;
 use pasta_curves::{Ep, Fq};
 
 fn main() {
+    /*
     let value_commit_base = Ep::from_bytes(
         &hex::decode("6743f93a6ebda72a8c7c5a2b7fa304fe32b29b4f706aa8f7420f3d8e7a59702f")
             .unwrap()
@@ -60,10 +61,27 @@ fn main() {
         hex::decode("fcbbf054c198f28b1a72383693ff51c3f9b2090431982af35b3fa6c539924939d2fbf4e40f5486ae30afa7a2aad0a648fbe8f8f82f876b4df555fbfa46af6211")
             .unwrap().try_into().unwrap(),
         &sighash,
+    );*/
+
+    verify::<SpendAuth>(
+        [
+            7, 134, 96, 79, 198, 100, 78, 92, 203, 159, 197, 57, 108, 181, 100, 134, 52, 252, 23,
+            241, 125, 40, 145, 252, 96, 19, 1, 94, 170, 126, 12, 5,
+        ],
+        [
+            153, 182, 38, 143, 242, 100, 74, 235, 221, 130, 99, 102, 220, 156, 47, 97, 188, 166,
+            60, 254, 181, 54, 223, 45, 121, 221, 234, 14, 33, 145, 242, 132, 121, 168, 237, 26,
+            174, 32, 92, 22, 76, 75, 205, 175, 193, 159, 214, 35, 33, 136, 174, 193, 105, 29, 21,
+            162, 246, 35, 138, 128, 143, 115, 151, 35,
+        ],
+        &[
+            127, 150, 19, 68, 47, 211, 164, 137, 3, 63, 120, 143, 236, 185, 25, 104, 108, 67, 234,
+            179, 32, 46, 92, 153, 239, 235, 250, 27, 173, 254, 122, 226,
+        ],
     );
 }
 
-fn verify<S: SigType>(vk: [u8; 32], sig: [u8; 64], msg: &[u8; 32]) {
+fn verify<S: SigType>(vk: [u8; 32], sig: [u8; 64], msg: &[u8]) {
     let vk: VerificationKey<S> = vk.try_into().unwrap();
     let sig = Signature::try_from(sig).unwrap();
     println!("{:?}", vk.verify(msg, &sig));

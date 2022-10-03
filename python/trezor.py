@@ -16,9 +16,9 @@ def to_compact_size(n) -> None:
     assert 0 <= n <= 0xFFFF_FFFF
     if n < 253:
         return bytes([n])
-    elif n < 0x1_0000:
+    elif n <= 0xFFFF:
         return b"\xfd" + n.to_bytes(2, "little")
-    elif n < 0x1_0000_0000:
+    elif n <= 0xFFFF_FFFF:
         return b"\xfe" + n.to_bytes(4, "little")
     else:
         return b"\xff" + n.to_bytes(8, "little")
@@ -66,7 +66,7 @@ out1 = proto.TxOutputType(
     #address="t14oHp2v54vfmdgQ3v3SNuQga8JKHTNi2a1",
     #address="t1Lv2EguMkaZwvtFQW5pmbUsBw59KfTEhf4",
     address="tmQoJ3PTXgQLaRRZZYT6xk8XtjRbr2kCqwu",
-    amount=99980000 - FEE,
+    amount=1*ZEC,
     script_type=proto.OutputScriptType.PAYTOADDRESS,
 )
 out_ua = proto.TxOutputType(
@@ -89,24 +89,31 @@ out3 = proto.TxOutputType(
 
 client = get_default_client()
 sin1 = messages.ZcashOrchardInput(
-    note=messages.ZcashOrchardNote(
-        recipient = b'\x16\x06\x18\xe7\xe5~\xb2\x9b\xfc\x11\x82\x10\x8a\x93:\xe1\xdb\xf8\xcc\xc1H\xd3\xcf\xa6\xc0\xa1Z\x04\xde\t\xe3\xc8\x84L\xd0{\xe8"3.\xaa)\x00',
-        value = 99980000,
-        rho = b'1V1\xb6\xb3e@$\x98\xb8\n$Q\xb3\xfe\x1e\x14H\x94\xa3\x0f\xab\xc8\xf0\xdf\x84\xe8\xfem\xaah\x1c',
-        rseed = b'Aj\x02Gc\x8c\x0f~\xaf!SV#\r\xe1\xbb]i\xe9\xefIUv\xfbtjr\xf2}%\x97[',
-        #cmx = b'\n\x19\xfcT\xd2\xfe\n\xf6@H\x94s1\x0fl\xb8\xf7=\xd8oD\x8b\xc1\x0b\xf5\x18u\xce\x14\x90N4'
-    )
+    recipient = b'\x16\x06\x18\xe7\xe5~\xb2\x9b\xfc\x11\x82\x10\x8a\x93:\xe1\xdb\xf8\xcc\xc1H\xd3\xcf\xa6\xc0\xa1Z\x04\xde\t\xe3\xc8\x84L\xd0{\xe8"3.\xaa)\x00',
+    value = 99980000,
+    rho = b'1V1\xb6\xb3e@$\x98\xb8\n$Q\xb3\xfe\x1e\x14H\x94\xa3\x0f\xab\xc8\xf0\xdf\x84\xe8\xfem\xaah\x1c',
+    rseed = b'Aj\x02Gc\x8c\x0f~\xaf!SV#\r\xe1\xbb]i\xe9\xefIUv\xfbtjr\xf2}%\x97[',
+    #cmx = b'\n\x19\xfcT\xd2\xfe\n\xf6@H\x94s1\x0fl\xb8\xf7=\xd8oD\x8b\xc1\x0b\xf5\x18u\xce\x14\x90N4'
 )
 
-anchor = bytes.fromhex("7ebcbe2bb8348263d6ce60c2723735a58c557b82daf59ccc38787fa100b2ac37")
+# txid = f10749942b882272429f4301688b400b433f2a3b914205cb3e7635b5c538495c
+sin2 = messages.ZcashOrchardInput(
+    recipient = b'\x16\x06\x18\xe7\xe5~\xb2\x9b\xfc\x11\x82\x10\x8a\x93:\xe1\xdb\xf8\xcc\xc1H\xd3\xcf\xa6\xc0\xa1Z\x04\xde\t\xe3\xc8\x84L\xd0{\xe8"3.\xaa)\x00',
+    value = 99980000,
+    rho =  b'\x042\x91\xd5K\xc4D`!Ph"5@4\xa5\x02Z\x89F(\xe9*v\xb1\xb6\xebSf\xbb\xbb\x0c',
+    rseed =  b'\x01\x9ck\xe9\xed\x02\xfb\xab\xcdQ\xb6\xab\xfe\xac\xa1\xd4\xafV\xb9\xae\xeb\xfa\xba\x0c\xff\xaf\xaf\xcd!\x00\x94\x1f',
+)
+# spend in 97ff06d3243407f9a187c8a0310ff75fd941cbe1b6a67fcf3dbeb935f474850b
+
+anchor = bytes.fromhex("b6ed295d71902c0023a8695106dda23d98a679cf64269dcf2bc3060a6f4a4d07")
 merkle_path = (
-    30542,
+    30548,
     list(map(bytes.fromhex, [
-        "a7aaf4560b00d36592cc2c33c2c97ed55e6b12791938c3da1ed7caf3bc7efa3a",
-        "7d214c33bb274fc5593832bc81113aab2fc03e2647c6323edfa7125b0d97d735",
-        "45e93b7574d2c9aebc33ce49f78770c652375f0a6cca2c902b176bb51c1d0e36",
-        "e5184c7259c6f61a35451969912554e9262629aad0fa0b3fdf3cf292ce06221e",
-        "806afbfeb45c64d4f2384c51eff30764b84599ae56a7ab3d4a46d9ce3aeab431",
+        "8646890daed861a8f66a3966e884da1b1c8240bb47327a348fae9169eb820505",
+        "d1ab2507c809c2713c000f525e9fbdcb06c958384e51b9cc7f792dde6c97f411",
+        "18681f82320257f5a5cfc5c846fd4e88641d4ed7b87fcd5ec8e65e68e3ab0636",
+        "2111fc397753e5fd50ec74816df27d6ada7ed2a9ac3816aab2573c8fac794204",
+        "55cd8735904f69800ba500bf8af6fc70bfb2abb3d7ca1c75a1cce183b763f304",
         "873e4157f2c0f0c645e899360069fcc9d2ed9bc11bf59827af0230ed52edab18",
         "6e57cbad21bab804109f19479a88046b5c7f8da0d21e8217ac467801235c5220",
         "4e14563df191a2a65b4b37113b5230680555051b22d74a8e1f1d706f90f3133b",
@@ -137,8 +144,8 @@ merkle_path = (
     ]))
 )
 
-def get_note(value):
-    return messages.ZcashOrchardNote(
+def get_oinput(value):
+    return ZcashOrchardInput(
         recipient = b'\x16\x06\x18\xe7\xe5~\xb2\x9b\xfc\x11\x82\x10\x8a\x93:\xe1\xdb\xf8\xcc\xc1H\xd3\xcf\xa6\xc0\xa1Z\x04\xde\t\xe3\xc8\x84L\xd0{\xe8"3.\xaa)\x00',
         value = value,
         rho = bytes([2]*32),
@@ -150,26 +157,35 @@ def get_change_sout(amount):
         amount = amount,
     )
 
-def get_input(amount):
-    return messages.ZcashOrchardInput(
-        note = get_note(amount),
-    )
-
 sout1 = messages.ZcashOrchardOutput(
     amount = 1*ZEC,
 )
 
 sout2 = messages.ZcashOrchardOutput(
     address = "utest1xt8k2akcdnncjfz8sfxkm49quc4w627skp3qpggkwp8c8ay3htftjf7tur9kftcw0w4vu4scwfg93ckfag84khy9k40yanl5k0qkanh9cyhddgws786qeqn37rtyf6rx4eflz09zk06",
-    amount = 1*ZEC - FEE,
+    amount = 1*ZEC,
+    memo = "very important memo",
+)
+
+sout3 = messages.ZcashOrchardOutput(
+    address = "utest1xt8k2akcdnncjfz8sfxkm49quc4w627skp3qpggkwp8c8ay3htftjf7tur9kftcw0w4vu4scwfg93ckfag84khy9k40yanl5k0qkanh9cyhddgws786qeqn37rtyf6rx4eflz09zk06",
+    amount = 1*ZEC,
     #memo = "very important memo",
 )
 
+long_memo = messages.ZcashOrchardOutput(
+    address = "utest1xt8k2akcdnncjfz8sfxkm49quc4w627skp3qpggkwp8c8ay3htftjf7tur9kftcw0w4vu4scwfg93ckfag84khy9k40yanl5k0qkanh9cyhddgws786qeqn37rtyf6rx4eflz09zk06",
+    amount = 0*ZEC,
+    memo = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Enim tortor at auctor urna nunc. Urna porttitor rhoncus dolor purus non enim praesent elementum facilisis. Amet purus gravida quis blandit turpis cursus in hac. Eu non diam phasellus vestibulum lorem sed risus. Pellentesque elit ullamcorper dignissim cras tincidunt. Egestas purus viverra accumsan in nisl nisi scelerisque eu ultrices. Morbi tincidunt ornare massa eget egestas purus.",
+)
+
+fvk = bytes.fromhex("d38d537a1195343afb128a58958f2cba8f6435488fa57e1a09c23451a07d7a14ca39d4b3d4163372065a1e54a4bc33d17f441f913ef91cda6e76c265fac32529d72fc9967f7751a5c8abc2b0b677879faef25871156faf6726ee79a7b4d5a00b")
+
 config_2 = {
-    "t_inputs": 2*[inp1],
-    "t_outputs": [],
-    "o_inputs": [], # [get_input(1), get_input(1000)],
-    "o_outputs": [get_change_sout(1) for _ in range(2)] #, + [sout2],
+    "t_inputs": 4*[inp1],
+    "t_outputs": [out1, out_ua],
+    "o_inputs": [],
+    "o_outputs": [sout2, sout3, long_memo],
 }
 
 config_3 = {
@@ -203,7 +219,7 @@ config_6 = {
 config_7 = {
     "t_inputs": [],
     "t_outputs": [out1],
-    "o_inputs": [sin1],
+    "o_inputs": [sin2],
     "o_outputs": [],
 }
 
@@ -214,58 +230,64 @@ config_8 = {
     "o_outputs": [get_change_sout(0)],
 }
 
+config_8 = {
+    "t_inputs": [],
+    "t_outputs": [],
+    "o_inputs": [sin1],
+    "o_outputs": [get_change_sout(99980000)],
+}
+
+config = config_8
+
 print("=== sign tx ===")
-signatures, serialized_tx, witnesses = zcash.sign_tx(
+protocol = zcash.sign_tx(
     client,
     coin_name="Zcash Testnet",
     anchor=anchor,
-    **config_7,
+    verbose=True,
+    **config,
 )
 
-if len(witnesses) != 0 and input("=== prove (y/N):") == "y":
-    #sighash = eval(input("sighash:"))
-    #assert type(sighash) == bytes
-    #assert len(sighash) == 32
+shielding_seed = next(protocol)
+sighash = next(protocol)
+print("sighash:", list(sighash))
+signatures, serialized_tx = next(protocol)
+
+if len(config["o_inputs"] + config["o_outputs"]) > 0 and input("=== prove (y/N):") == "y":
     import time
-    from trezor_orchard import *
-    print("parse witnesses")
-    witnesses = list(map(Witness.from_msg, witnesses))
-    for w in witnesses:
-        if w.input_index is not None:
-            w.set_merkle_path(merkle_path)
+    from py_trezor_orchard import *
 
-    prover = Prover(
+    inputs = [OrchardInput(txi, merkle_path) for txi in config["o_inputs"]]
+    outputs = [OrchardOutput(txo) for txo in config["o_outputs"]]  #recipient
+
+    builder = TrezorBuilder(
+        inputs,
+        outputs,
         anchor,
-        True,
-        True,
+        fvk,
+        shielding_seed,
     )
+    bundle = builder.build()
+    bundle.prepare(sighash)
+    print(list(signatures[3].values()))
+    # bundle.append_signatures(list(signatures[3].values()))
 
+    """
     print("build the proving key")
     t1 = time.time()
     pk = ProvingKey.build()
     t2 = time.time()
     print("{:.2f} s".format(t2 - t1))
+
     print("create a proof")
     proof = bytes(prover.proof(witnesses, pk))
     t3 = time.time()
     print("{:.2f} s".format(t3 - t2))
     print("proof:", proof[:20], "...")
 
-    serialized_tx += to_compact_size(len(proof))
-    serialized_tx += proof
-    for auth_sig in signatures[SigType.ORCHARD_SPEND_AUTH]:
-        serialized_tx += auth_sig
-    serialized_tx += signatures[SigType.ORCHARD_BINDING][0]
-
-    bundle_size = 1 + 2*(820+64)+64+32+8+1+len(to_compact_size(len(proof)))+len(proof)
-    serialized_bundle = serialized_tx[-bundle_size:]
     with open("/home/agi/bundle", "wb") as file:
         file.write(serialized_bundle)
-    #verify_bundle(list(serialized_bundle))
-    #print("=== serialized tx (hex) ===")
-    #print(serialized_tx.hex())
-    #print("=== serialized tx (base64) ===")
-    #print(b64encode(serialized_tx).decode("utf-8"))
+    """
 
 print("=======")
 print("saving to ~/tx")
