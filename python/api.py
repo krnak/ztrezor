@@ -14,7 +14,9 @@ def call(method, name, *args, **kwargs):
 
 
 def send_tx(tx_hex):
-    return call(post, "send_tx", tx_hex=tx_hex)["txid"]
+    txid = call(post, "send_tx", tx_hex=tx_hex)["txid"]
+    print(f"https://sochain.com/tx/ZECTEST/{txid}")
+    return txid
 
 
 def is_tx_confirmed(txid):

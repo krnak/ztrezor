@@ -9,3 +9,8 @@ witness_getter/target
 witness_getter/Cargo.lock
 verify_signature/target
 verify_signature/Cargo.lock
+notes/
+rendered/
+spent_notes/
+txs/
+witnesses/
