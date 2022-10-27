@@ -28,13 +28,30 @@ Every shielded transaction is authorized by a zero knowledge proof. Since comput
 #### Field and Pallas
 Orchard uses arithmetics in 255-bit finite fiald Fp. Crate `pasta_curves` contains very efficient `no_std`-compatible implementation of Fp and of Pallas elliptic curve. Crate uses standard speed-up techniques like Montgomery reductions and projective coordinates.
 
-Squaring in Fp is optimized by large pre-computed tables. Crate also contains a (`no_std` compatible) table-less squaring implemented via Tonelli–Shanks' square-root algorithm[[1](https://eprint.iacr.org/2012/685.pdf)] for `p mod 16 = 1`. Squaring is necessary for hashing to the curve.
+Squaring in Fp is optimized by large pre-computed tables. Crate also contains a (`no_std` compatible) table-less squaring implemented via Tonelli–Shanks' square-root algorithm[[1](https://eprint.iacr.org/2012/685.pdf)] for `p mod 16 = 1`. Squaring is necessary for hashing to the curve and unpacking compressed curve points.
 
-Hashing to the Pallas is realized by simplified version of SWU algoritm. Since `a = 0` for Pallas, algoritm first hashes a messages to the different curve and the maps the point to the Pallas by curve isogeny.
+Hashing to the Pallas is realized by simplified version of SWU algoritm. Since linear term of Pallas equation is zero, algoritm first hashes a messages to a isogenic curve (isoPallas) and then maps the result to the Pallas.
 
-Tonelli-Shanks: 822 multiplications
-Hashing requires: TODO
-Isogeny computation requires: TODO
+#### Algorithms efficiency
+```python
+fiel_mul = ?
+blake = ?
+
+curve_add = 14 * field_mul
+curve_double = 7 * field_mul
+curve_mul = 254 * curve_double + 254 * curve_add = 5334 * field_mul
+isogeny = 33 * field_mul
+
+field_sqrt = 822 * field_mul
+hash_to_field = 3 * blake
+map_to_curve = 19 * field_mul + 2 * field_sqrt = 1663 * field_mul
+hash_to_curve = hash_to_field + 2 * map_to_curve + isogeny + curve_add = 3 * BLAKE + 3373 * field_mul
+
+sinsemilla_block = hash_to_curve + 2 * curve_add
+commit_ivk = 51 * sinsemilla_block + curve_mul + curve_add
+commit_note = 109 * sinsemilla_block + curve_mul + curve_add
+reddsa_sign = 2 * blake + field_mul + 2 * curve_mul
+```
 
 #### ZIP-32
 #### Address generation
@@ -124,8 +141,6 @@ Zcash libraries are now available in Rust. I would like to use them directly as 
 | [reddsa](https://github.com/str4d/redjubjub) | :heavy_check_mark: | :heavy_check_mark: |
 | [fpe](https://github.com/str4d/fpe) | in progress | :heavy_check_mark: |
 | poseidon | almost | almost |
-<<<<<<< HEAD
-=======
 
 ## Zcash codebase analysis
 
@@ -157,4 +172,3 @@ Zcash repositores relevant to this project are generally written in Rust.
 [lightwalletd](https://github.com/zcash/lightwalletd) (coded in Go lang) can be used for communication with a full node.
 
 [halo2](https://github.com/zcash/halo2) crate (coded in Rust) will be used for proof computation.
->>>>>>> 8c63eb92866e28917ddbf19cf00a73b8d3414246
