@@ -6,16 +6,16 @@
 
 Our communication scheme consists of four players: an user, a hardware wallet (HWW), a host (typically a PC or a cell phone) and Zcash fullnode (a server maintaining a full blockchain copy).
 
-Threat model for host<->fullnode communication is well-described in [Zcash doc](https://zcash.readthedocs.io/en/latest/rtd_pages/wallet_threat_model.html). In this section we focus only to the communication between the host, the user and the HWW.
+Threat model for host<->fullnode communication is described in [Zcash doc](https://zcash.readthedocs.io/en/latest/rtd_pages/wallet_threat_model.html). In this section we focus only to the communication between the host, the user and the HWW.
 
 Our security goals differs according to following two scenarios:  
 
 1. If the **Host is honest**, then all Zcash privacy features are preserved.
 2. Even if the **Host is malicious**, he cannot create a valid transaction with undesired effects. However, he can violate all Zcash privacy features.
 
-Knowledge of full viewing key is necessary for proof computation. Since FVK must be revealed to the host, there is no chance to preserve privacy against the host. Malicious can view details of all incoming and out-coming transactions.
+Every shielded transaction is authorized by a zero knowledge proof. Since compution of this proof is computationally demanding, this task must be delaged to the host. To do so, Full Viewing Key (FVK), which guarantees full access to the user's transaction history, must be revealed to the host. There no way how HWW can prevent a malicious host from sharing FVK with an attacker.
 
-TODO: gapped model
+(Even if a mallicious host were locked into some sandbox without access to any side-channel, it can send FVK to an attacker by secretly encoding it into a transaction itself by manipulating proof randomness. Attacker then gains FVK by scanning every transaction in the blockchain.)
 
 ## Comparison with the Ledger
 
