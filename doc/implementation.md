@@ -192,6 +192,10 @@ must be computed now. This requires following steps:
     1. Trezor shields the Action and updates sighasher state by action components.
 1. Trezor finishes the computation of Orchard bundle sighash by adding _anchor_, _value balance_ and _flags_ to the hash state.
 
+There two reasons, why components of Orchard bundle are not computed already in the first phase.
+1. Since Orchard bundle shielding is computationally demanding, this would cause (approx. 12s) delays between confirmations of individual shielded outputs.
+2. We want to let the user to confirm transaction outputs in the same order he entered them on the Host and then compute sighash on shuffled outputs.
+
 Shielding one Action (step 6.iv.) consists of:
 - derivation of all necessary randomness computed from the _action shielding seed_
 - derivation of the dummy input or output
@@ -201,12 +205,6 @@ Shielding one Action (step 6.iv.) consists of:
 - computation of the value commitment
 - encryption of the note plaintext
 - encryption of the outgoing note plaintext
-
-There two reasons, why components of Orchard bundle are not computed already in the first phase.
-1. Since Orchard bundle shielding is computationally demanding, this would cause (approx. 12s) delays between confirmations of individual shielded outputs.
-2. We want to let the user to confirm transaction outputs in the same order he entered them on the Host and then compute sighash on shuffled outputs.
-
-### Shortened shielding flow
 
 ![shielding data flow](shielding_flow.png)
 
