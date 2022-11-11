@@ -92,7 +92,7 @@ I chose this approach.
 
 The main seed - _bundle shielding seed_ - is derived as follows:
 ```python
-ss_slip21 = self.keychain.derive_slip21(
+ss_slip21 = keychain.derive_slip21(
     [b"Zcash Orchard", b"bundle_shielding_seed"],
 ).key()
 bundle_shielding_seed = blake2b(
@@ -206,10 +206,41 @@ There two reasons, why components of Orchard bundle are not computed already in 
 1. Since Orchard bundle shielding is computationally demanding, this would cause (approx. 12s) delays between confirmations of individual shielded outputs.
 2. We want to let the user to confirm transaction outputs in the same order he entered them on the Host and then compute sighash on shuffled outputs.
 
-## Shortened shielding flow
+### Shortened shielding flow
 
 ![shielding data flow](shielding_flow.png)
 
+### Parallelizable MAC
+
+Whenever Trezor re-requests some part of a transaction, it must check response integrity with the response it got the fist time.
+
+In case of transaparent input (resp. outputs), this is easy. Trezor always iterates the sequence of inputs in the same order. Thus Trezor just always compute a digest of the sequence (which can be computed incrementally) and compares it with the first digest it got.
+
+In case of shielded inputs (resp. outputs), this is more complicated, because orders of these are shuffled before shielding. Fortunetly, we can exploit parallelizability of HMAC to overcome this issue. Messages digest is computed as follows
+
+```python
+# derive a secret key
+key = keychain.derive_slip21(
+    [b"Zcash Orchard", b"Message Accumulator"],
+).key()
+
+# derive an unique mask for every message type and message index
+mask_preimage[i][j] = i.to_bytes(2, "big") || j.to_bytes(4, "little") || 26*[0]
+mask[i][j] = aes(key).encode(mask_preimage[i][j])
+
+# initialize accumulator with zeros
+initial_accumulator_state = 32 * [0]
+
+# update the accumulator in an arbitrary order
+update_accumulator(msg, msg_index, state) = do
+    msg_digest = sha256(protobuf.dump_message_buffer(msg)).digest()
+    msg_mask = mask[msg.code][msg_index]
+    state = state xor aes(key).encode(msg_mask xor msg_digest)
+```
+
+Probably, just a xor of hmacs of tuples (message, index) would be secure too. The scheme above follows HMAC construction, which is **provably** secure. Construction differs in these points:
+1. Original scheme supposes usage of Galois counter for mask derivation to increase scheme efficiency. We want to avoid any incremental computation (and Galois counter implementation). The only requirement on input mask is uniformity and unpredictability. This is satisfied by our scheme.
+2. We ommit the last step of the HMAC construction, where xor sum is encrypted, because this sum never leaves the Trezor.
 
 ## External Zcash crates
 
