@@ -1,5 +1,3 @@
-# Implementation
-
 ## Security model
 
 <img src="interactions.png" alt="Trezor - Host - User - full node interactions" width="600"/>  
@@ -39,8 +37,8 @@ Hashing to the Pallas is realized by simplified version of SWU algoritm. Since l
 
 #### Algorithms efficiency
 ```python
-fiel_mul = ?
-blake = ?
+# fiel_mul - one field multiplication
+# blake - one blake2b digest
 
 curve_add = 14 * field_mul
 curve_double = 7 * field_mul
@@ -50,7 +48,7 @@ isogeny = 33 * field_mul
 field_sqrt = 822 * field_mul
 hash_to_field = 3 * blake
 map_to_curve = 19 * field_mul + 2 * field_sqrt = 1663 * field_mul
-hash_to_curve = hash_to_field + 2 * map_to_curve + isogeny + curve_add = 3 * BLAKE + 3373 * field_mul
+hash_to_curve = hash_to_field + 2 * map_to_curve + isogeny + curve_add = 3 * blake + 3373 * field_mul
 
 sinsemilla_block = hash_to_curve + 2 * curve_add
 commit_ivk = 51 * sinsemilla_block + curve_mul + curve_add
@@ -60,59 +58,39 @@ reddsa_sign = 2 * blake + field_mul + 2 * curve_mul
 
 #### ZIP-32
 #### Address generation
-#### Shielding
 
 
-## Transaction signing flow
+## Trezor <-> Host interation
 
-In this section I will describe how a shielded transaction is signed. This process can be separated into three phases.
+Transaction is authorized by zero-knowledge proof. We delegate computation of this proof to the host. We considered several models of interaction between HWW and the prover algorithm. They differ in the way how shielding randomness (transaction blinding factors) were created.
 
-1. confirm transaction
-2. shield transaction and compute its sighash
-3. retrieve signatures
+#### Randomness by Trezor
 
-In the first phase, transaction details are requested by Trezor. All transaction inputs and outputs (both transparent and shielded) are requested by Trezor, one by one. Trezor requires user to confirm transaction outputs and fee. At the same time it incrementally updates digest of all received data to authentize them in phase 2.
+This is excluded, because all Trezor responses must be deterministic.
 
-Transaction sighash is computed in the second phase. From now, let call different parts of the transaction _bundles_. For sighash of the transparent bundle, hash components
-```
-prevouts_digest, amounts_digest, scriptpubkeys_digest, sequence_digest and outputs_digest
-```
-were already computed in the first phase. On contrary, Orchard bundle sighash components  
-```
-commitments_digest, memos_digest, notes_digest
-```
-must be computed now. This requires following steps:
+#### Randomness by Host
 
-1. Trezor derives a _bundle shielding seed_, from which all the randomness necessary for bundle shielding is derived. Trezor send this seed to the Host.
-1. Since result of Orchard bundle shielding is completely determined by the set of Orchard inputs and outputs, anchor, flags and _bundle shielding seed_, the Host can replicate all following steps (3-8) to get the Orchard bundle. While Trezor is computing the bundle shielding to get its sighash, Host can compute a bundle authorizing proof in parallel.
-1. Trezor makes the set of shielded inputs equal in size to the set of shielded outputs by padding the smaller one with dummy notes.
-1. Trezor shuffles shielded inputs and output and zip them into Actions.
-1. Trezor precomputes the Full Viewing Key for the account from which is being spent.
-1. Trezor start incremental computation of the Orchard bundle sighash. For each action:
-    1. Trezor request the action input (if it is not dummy).
-    1. Trezor request the action output (if it is not dummy).
-    1. Trezor derives _action shielding seed_ from the _bundle shielding seed_ and Action index.
-    1. Trezor shields the Action and updates sighasher state by action components.
-1. Trezor finishes the computation of Orchard bundle sighash by adding _anchor_, _value balance_ and _flags_ to the hash state.
-    
-Shielding one Action (step 6.iv.) consists of:
-- derivation of all necessary randomness computed from the _action shielding seed_
-- derivation of the dummy input or output
-- computation of input note nullifier
-- randomization of spend validating key
-- computation of output note commitmnet
-- computation of the value commitment
-- encryption of the note plaintext
-- encryption of the outgoing note plaintext
+In this model all randomness is computed by the Host. Trezor just verifies effect of the transaction. I.e. Trezor gets a serialized shielded Orchard bundle and it decrypts its effect.
 
-There two reasons, why components of Orchard bundle are not computed already in the first phase.
-1. Since Orchard bundle shielding is computationally demanding, this would cause (approx. 12s) delays between confirmations of individual shielded outputs.
-2. We want to let the user to confirm transaction outputs in the same order he entered them on the Host and then compute sighash on shuffled outputs.
+This approach has several issues:
 
+1. Dummy outputs are not decryptable by default. It follows that Trezor cannot check these outputs. This could be solved by attaching Incoming Vieving Key to every output dummy Note.
+2. Recipent address of an output cannot be recovered from Orchard Bundle data due to the nature of Unified Addresses. The Bundle contains only information about the Orchard receiver of the unified address. The recipient address cannot be recovered without knowledge of other receivers of the address. This could be solved by attaching original plaintext address to every output.
+3. Trezor cannot check genuinity of Bundle shielding randomness.
+Pros:
+- Nullifiers dont have to be recomputed.
 
-## Randomness derivation
+#### Randomness derived from a seed
 
-The _bundle shielding seed_ is derived as follows:
+In this model all randomness is derived from some random seed. Both parties, Trezor and the host, use this seed to shield the bundle, getting the same result. This approach is quite efficient for the Trezor, because it does not require Trezor to request nor store so much data.
+
+I chose this approach.
+
+### Randomness derivation from a seed
+
+(this section has a documentation character and can be skipped)
+
+The main seed - _bundle shielding seed_ - is derived as follows:
 ```python
 ss_slip21 = self.keychain.derive_slip21(
     [b"Zcash Orchard", b"bundle_shielding_seed"],
@@ -182,25 +160,51 @@ shuffle(x) = do
         x[i], x[j] = x[j], x[i]
 ```
 
-## Authorization proof
+## Transaction signing flow
 
-Transaction is authorized by zero-knowledge proof. We delegate computation of this proof to the host. We considered several models of interaction between HWW and the prover algorithm.
+In this section I will describe how a shielded transaction is signed. This process can be separated into three phases.
 
-#### Randomness by Host
+1. confirm transaction
+2. shield transaction and compute its sighash
+3. retrieve signatures
 
-All randomness is computed by the Host. Trezor just verifies effect of the transaction.
+In the first phase, transaction details are requested by Trezor. All transaction inputs and outputs (both transparent and shielded) are requested by Trezor, one by one. Trezor requires user to confirm transaction outputs and fee. At the same time it incrementally updates digest of all received data to authentize them in phase 2.
 
-- harder to analyze
-- non-verifiable randomness
+Transaction sighash is computed in the second phase. From now, let call different parts of the transaction _bundles_. For sighash of the transparent bundle, hash components
+```
+prevouts_digest, amounts_digest, scriptpubkeys_digest, sequence_digest and outputs_digest
+```
+were already computed in the first phase. On contrary, Orchard bundle sighash components  
+```
+commitments_digest, memos_digest, notes_digest
+```
+must be computed now. This requires following steps:
 
-+ no need for Poseidon
-+ parallelizable
+1. Trezor derives a _bundle shielding seed_, from which all the randomness necessary for bundle shielding is derived. Trezor send this seed to the Host.
+1. Since result of Orchard bundle shielding is completely determined by the set of Orchard inputs and outputs, anchor, flags and _bundle shielding seed_, the Host can replicate all following steps (3-8) to get the Orchard bundle. While Trezor is computing the bundle shielding to get its sighash, Host can compute a bundle authorizing proof in parallel.
+1. Trezor makes the set of shielded inputs equal in size to the set of shielded outputs by padding the smaller one with dummy notes.
+1. Trezor shuffles shielded inputs and output and zip them into Actions.
+1. Trezor precomputes the Full Viewing Key for the account from which is being spent.
+1. Trezor start incremental computation of the Orchard bundle sighash. For each action:
+    1. Trezor request the action input (if it is not dummy).
+    1. Trezor request the action output (if it is not dummy).
+    1. Trezor derives _action shielding seed_ from the _bundle shielding seed_ and Action index.
+    1. Trezor shields the Action and updates sighasher state by action components.
+1. Trezor finishes the computation of Orchard bundle sighash by adding _anchor_, _value balance_ and _flags_ to the hash state.
 
-#### Randomness derived from a seed
+Shielding one Action (step 6.iv.) consists of:
+- derivation of all necessary randomness computed from the _action shielding seed_
+- derivation of the dummy input or output
+- computation of input note nullifier
+- randomization of spend validating key
+- computation of output note commitmnet
+- computation of the value commitment
+- encryption of the note plaintext
+- encryption of the outgoing note plaintext
 
-- harder to code
-+ easy and efficient
-+ parallelizable
+There two reasons, why components of Orchard bundle are not computed already in the first phase.
+1. Since Orchard bundle shielding is computationally demanding, this would cause (approx. 12s) delays between confirmations of individual shielded outputs.
+2. We want to let the user to confirm transaction outputs in the same order he entered them on the Host and then compute sighash on shuffled outputs.
 
 ## Shortened shielding flow
 
