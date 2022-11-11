@@ -181,63 +181,12 @@ long_memo = messages.ZcashOrchardOutput(
 
 fvk = bytes.fromhex("d38d537a1195343afb128a58958f2cba8f6435488fa57e1a09c23451a07d7a14ca39d4b3d4163372065a1e54a4bc33d17f441f913ef91cda6e76c265fac32529d72fc9967f7751a5c8abc2b0b677879faef25871156faf6726ee79a7b4d5a00b")
 
-config_2 = {
-    "t_inputs": 4*[inp1],
-    "t_outputs": [out1, out_ua],
-    "o_inputs": [],
-    "o_outputs": [sout2, sout3, long_memo],
-}
 
-config_3 = {
-    "t_inputs": [real_inp],
-    "t_outputs": [],
-    "o_inputs": [],
-    "o_outputs": [get_change_sout(1*ZEC - 2*FEE)],
+config_1 = {
+    "inputs": [inp1],
+    "outputs": [sout3],
 }
-
-config_4 = {
-    "t_inputs": [real_inp_2],
-    "t_outputs": [out1],
-    "o_inputs": [],
-    "o_outputs": [],
-}
-
-config_5 = {
-    "t_inputs": [reg_inp],
-    "t_outputs": [reg_out],
-    "o_inputs": [],
-    "o_outputs": [],
-}
-
-config_6 = {
-    "t_inputs": [inp1],
-    "t_outputs": [],
-    "o_inputs": [],
-    "o_outputs": [sout2],
-}
-
-config_7 = {
-    "t_inputs": [],
-    "t_outputs": [out1],
-    "o_inputs": [sin2],
-    "o_outputs": [],
-}
-
-config_8 = {
-    "t_inputs": [],
-    "t_outputs": [],
-    "o_inputs": [],
-    "o_outputs": [get_change_sout(0)],
-}
-
-config_8 = {
-    "t_inputs": [],
-    "t_outputs": [],
-    "o_inputs": [sin1],
-    "o_outputs": [get_change_sout(99980000)],
-}
-
-config = config_8
+config = config_1
 
 print("=== sign tx ===")
 protocol = zcash.sign_tx(

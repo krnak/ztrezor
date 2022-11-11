@@ -67,37 +67,47 @@ def render_tx(tx):
     expected_sighash = bytes.fromhex(\"{tx.sighash.hex()}\")
     expected_serialized_tx = bytes.fromhex(\"{tx.serialized_tx.hex()}\")
     """)
+    expected_messages = "".join(f"""
+                {x}""" for x in tx.expected)
+    if expected_messages:
+        expected_messages += "\n            "
+
     f.write(f"""
-    protocol = zcash.sign_tx(
-        client,""")
+    with client:
+        client.set_expected_responses(
+            [{expected_messages}]
+        )
+
+        protocol = zcash.sign_tx(
+            client,""")
     for to in ["t", "o"]:
         for io, inout in [("inp", "input"), ("out", "output")]:
             cont = ", ".join(f"{to}_{io}_{i}" for i in range(len(getattr(tx, f"{to}_{inout}s"))))
-            f.write(f"\n        {to}_{inout}s=[{cont}],")
+            f.write(f"\n            {to}_{inout}s=[{cont}],")
     t_sigs = "".join(f"""
-            bytes.fromhex(\"{sig.hex()}\")""" for sig in tx.signatures[0])
+                bytes.fromhex(\"{sig.hex()}\"),""" for sig in tx.signatures[0])
     if t_sigs:
-        t_sigs += "\n        "
+        t_sigs += "\n            "
     o_sigs = "".join(f"""
-            {k}: bytes.fromhex(\"{sig.hex()}\")""" for k, sig in tx.signatures[3].items())
+                {k}: bytes.fromhex(\"{sig.hex()}\"),""" for k, sig in tx.signatures[3].items())
     if o_sigs:
-        o_sigs += "\n        "
+        o_sigs += "\n            "
     f.write(f"""
-        anchor=anchor,
-        coin_name=\"Zcash Testnet\",
-    )
-    shielding_seed = next(protocol)
-    assert shielding_seed == expected_shielding_seed
-    sighash = next(protocol)
-    assert sighash == expected_sighash
-    signatures, serialized_tx = next(protocol)
-    assert serialized_tx == expected_serialized_tx
-    assert signatures == {{
-        ZcashSignatureType.TRANSPARENT: [{t_sigs}],
-        ZcashSignatureType.ORCHARD_SPEND_AUTH: {{{o_sigs}}},
-    }}
+            anchor=anchor,
+            coin_name=\"Zcash Testnet\",
+        )
 
-    # txid: {tx.txid}
-    # link: https://sochain.com/tx/ZECTEST/{tx.txid}
-    """)
+        shielding_seed = next(protocol)
+        assert shielding_seed == expected_shielding_seed
+        sighash = next(protocol)
+        assert sighash == expected_sighash
+        signatures, serialized_tx = next(protocol)
+        assert serialized_tx == expected_serialized_tx
+        assert signatures == {{
+            ZcashSignatureType.TRANSPARENT: [{t_sigs}],
+            ZcashSignatureType.ORCHARD_SPEND_AUTH: {{{o_sigs}}},
+        }}
+
+        # Accepted by network as {tx.txid}
+        # link: https://sochain.com/tx/ZECTEST/{tx.txid}\n\n""")
     f.close()

@@ -10,40 +10,34 @@ import api
 import yaml
 import time
 from render import render_tx
+import expected_messages
+from tx_inputs import get_free_input, OInput, TInput
+import ref
 
 
 class Tx:
     def __init__(self, **kwargs):
         for k, v in kwargs.items():
             setattr(self, k, v)
+        setattr(self, "account", kwargs.get("account", 0))
 
-    @staticmethod
-    def load(name):
-        print(f"loading tx {name}")
-        with open(f"/home/agi/code/ztrezor/txs/{name}.yaml", "r") as f:
-            return yaml.load(f.read(), Loader=yaml.Loader)
-
-    def save(self):
-        print(f"saving tx {self.name}")
-        with open(f"/home/agi/code/ztrezor/txs/{self.name}.yaml", "w") as f:
-            f.write(yaml.dump(self))
+    def as_ref(self):
+        ref.get(self.name)
 
     def fund(self, resources, add_change=False):
         print(f"funding {self.name}")
-        for k in self.funding:
-            if len(resources[k]) < self.funding.count(k):
-                raise ValueError("not enough resources")
-
-        inputs = [resources[txi].pop() for txi in self.funding]
-        self.t_inputs = [txi for txi in inputs if isinstance(txi, TxInputType)]
-        self.o_inputs = [txi for txi in inputs if isinstance(txi, tuple)]
-        self.t_outputs = [txo for txo in self.outputs if isinstance(txo, TxOutputType)]
-        self.o_outputs = [txo for txo in self.outputs if isinstance(txo, ZcashOrchardOutput)]
+        self.inputs = []
+        for path, amount in self.funding:
+            txi = get_free_input(path, amount)
+            txi.i.belongs_to = self.name
+            self.inputs.append(txi)
+            self.as_ref().save()
         self.anchor = get_anchor()
+        self.as_ref().save()
 
-        balance = sum(f[1] for f in self.funding) - sum(txo.amount for txo in self.t_outputs + self.o_outputs)
+        balance = sum(f[1] for f in self.funding) - sum(txo.amount for txo in self.outputs)
         if add_change and balance > FEE:
-            self.t_outputs.append(
+            self.outputs.append(
                 TxOutputType(
                     address_n=parse_path("m/44h/1h/0h/0/0"),
                     amount=balance - FEE,
@@ -51,7 +45,7 @@ class Tx:
                 )
             )
 
-        self.save()
+        self.as_ref().save()
 
     def render(self):
         render_tx(self)
@@ -64,29 +58,44 @@ class Tx:
 
         protocol = zcash.sign_tx(
             get_client(),
-            self.t_inputs,
-            self.t_outputs,
-            [x[0] for x in self.o_inputs],
-            self.o_outputs,
+            [txi.as_trezor_input() for txi in self.inputs],
+            self.outputs,
             coin_name="Zcash Testnet",
             anchor=self.anchor,
-            account=getattr(self, "account", default=0),
+            account=self.account,
             verbose=True,
         )
         self.shielding_seed = next(protocol)
         self.sighash = next(protocol)
         self.signatures, self.serialized_tx = next(protocol)
 
-        self.save()
+        #self.gen_expected()
+        self.as_ref().save()
+
+    def gen_expected(self):
+        if not hasattr(self, "expect"):
+            return
+        if self.expect == "gen":
+            print("generating expected messages")
+            self.expect = list(expected_messages.gen(
+                [],  #self.t_inputs,
+                [],  #self.t_outputs,
+                [],  #self.o_inputs,
+                [],  #self.o_outputs,
+                self.shielding_seed,
+            ))
+            self.as_ref().save()
 
     def prove(self, force=False):
         if hasattr(self, "orchard_serialized") and not force:
             print("already proven")
             return
         print(f"proving {self.name}")
+        o_inputs = [txi for txi in self.inputs if isinstance(txi.i, OInput)]
+        o_inputs = [txo for txo in self.outputs if isinstance(txo, ZcashOrchardOutput)]
         builder = TrezorBuilder(
-            [OrchardInput(x[0], x[1]) for x in self.o_inputs],
-            [OrchardOutput(txo) for txo in self.o_outputs],
+            [x.as_prover_input() for x in o_inputs],
+            [OrchardOutput(txo) for txo in o_outputs],
             self.anchor,
             fvk,
             self.shielding_seed,
@@ -100,15 +109,23 @@ class Tx:
         print("proving finished")
         bundle.finalize()
         self.orchard_serialized = bundle.serialized()
-
+        #fvk2 = bytes.fromhex("4e2604c456d1c03f9889cd96e1bffc33b0b8033a60935c3768f710c66095b93bd9246f6bf20d5a01f234a5b1f8df86d53a1414a5887bdc961de3156a53fe2b106af481a091adf651ea47a59499ac5572beeedae394d8c3f3dddad54092c66336")
         for note, cmx in bundle.decrypt_outputs_with_fvk(fvk):
-            create_note(cmx.hex(), note, getattr(self, "account", default=0))
+            ref.new(
+                cmx.hex(),
+                OInput(
+                    note=note,
+                    cmx=cmx.hex(),
+                    account=self.account,
+                    status="local"
+                ),
+            )
 
         with open("/home/agi/tx", "w") as f:
             print("save tx")
             f.write(self.serialized().hex())
 
-        self.save()
+        self.as_ref().save()
 
     def serialized(self):
         return self.serialized_tx[:-1] + self.orchard_serialized
@@ -127,7 +144,7 @@ class Tx:
             for utxn in self.o_inputs:
                 spend_note(utxn[2])
             print(f"{self.name} sent as {self.txid}")
-            self.save()
+            self.as_ref().save()
         return self.txid
 
     def wait_for(self):

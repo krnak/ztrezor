@@ -6,6 +6,7 @@ from trezorlib.tools import parse_path
 from trezorlib.messages import (
     OutputScriptType, ZcashOrchardOutput, TxOutputType, TxInputType, ZcashOrchardInput
 )
+import tx_inputs
 
 from trezorlib.client import get_default_client
 from py_trezor_orchard import ProvingKey
@@ -16,7 +17,6 @@ FEE = int(0.0001 * ZEC)
 BASE = int(0.01 * ZEC)
 
 fvk = bytes.fromhex("d38d537a1195343afb128a58958f2cba8f6435488fa57e1a09c23451a07d7a14ca39d4b3d4163372065a1e54a4bc33d17f441f913ef91cda6e76c265fac32529d72fc9967f7751a5c8abc2b0b677879faef25871156faf6726ee79a7b4d5a00b")
-
 
 PK = None
 CLIENT = None
@@ -36,35 +36,6 @@ def pk():
         PK = ProvingKey.build()
         print("proving key built")
     return PK
-
-
-def create_note(cmx, note, account):
-    print(f"saving note {cmx}")
-    with open(f"/home/agi/code/ztrezor/notes/{cmx}.yaml", "w") as f:
-        f.write(yaml.dump((note, account)))
-    with open(f"/home/agi/code/ztrezor/witnesses/{cmx}.json", "w") as f:
-        f.write("[0,[]]")
-
-
-def load_note(cmx):
-    print(f"loading note {cmx}")
-    with open(f"/home/agi/code/ztrezor/notes/{cmx}.yaml", "r") as f:
-        note, account = yaml.load(f.read(), Loader=yaml.Loader)
-    with open(f"/home/agi/code/ztrezor/witnesses/{cmx}.json", "r") as f:
-        pos, path = json.load(f)
-
-    path = list(map(bytes.fromhex, path))
-    input = ZcashOrchardInput(**note)
-    return input, (pos, path), cmx, account
-
-
-def spend_note(cmx):
-    print(f"spend note {cmx}")
-    try:
-        os.rename(f"/home/agi/code/ztrezor/notes/{cmx}.yaml", f"/home/agi/code/ztrezor/spent_notes/{cmx}.yaml")
-        os.remove(f"/home/agi/code/ztrezor/witnesses/{cmx}.json")
-    except FileNotFoundError:
-        pass
 
 
 def funding_to_output(f):

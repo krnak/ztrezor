@@ -1,28 +1,16 @@
 use incrementalmerkletree::{bridgetree::BridgeTree, Position, Tree};
-use orchard::{note::ExtractedNoteCommitment, tree::MerkleHashOrchard};
-use std::env;
-use subtle::CtOption;
+use orchard::tree::MerkleHashOrchard;
 //use zcash_client_backend::data_api::BlockSource;
 //use zcash_client_sqlite::{chain, BlockDb};
 //use zcash_primitives::consensus::BlockHeight;
 use hex;
+use std::collections::HashSet;
 use std::fs;
 use std::fs::File;
 use std::io::{self, prelude::*, BufReader};
 
 fn main() -> io::Result<()> {
-    let mut targets: Vec<MerkleHashOrchard> = vec![];
-    println!("Commitments:");
-    /*
-    let args: Vec<String> = env::args().collect();
-    for arg in args[1..].iter() {
-        println!("{}", arg);
-        let data: [u8; 32] = hex::decode(arg).unwrap().try_into().unwrap();
-        targets.push(MerkleHashOrchard::from_bytes(&data).unwrap())
-    }
-    println!("---");
-    */
-
+    let mut targets: HashSet<[u8; 32]> = HashSet::new();
     let cmxs: Vec<String> = fs::read_dir("/home/agi/code/ztrezor/witnesses")
         .unwrap()
         .map(|path| {
@@ -42,10 +30,11 @@ fn main() -> io::Result<()> {
         .filter(|x| x != "anchor")
         .collect();
 
+    println!("Commitments:");
     for cmx in cmxs.iter() {
         println!("    - {}", cmx);
         let data: [u8; 32] = hex::decode(cmx).unwrap().try_into().unwrap();
-        targets.push(MerkleHashOrchard::from_bytes(&data).unwrap())
+        targets.insert(data);
     }
     println!("---");
 
@@ -63,7 +52,7 @@ fn main() -> io::Result<()> {
         }
         let leaf = Option::from(MerkleHashOrchard::from_bytes(&cmx)).expect("invalid cmx in db");
         tree.append(&leaf);
-        if targets.contains(&leaf) {
+        if targets.contains(&leaf.to_bytes()) {
             let pos = tree.witness().expect("witness");
             positions.push((leaf, pos));
         }
@@ -91,34 +80,6 @@ fn main() -> io::Result<()> {
         let pos = u64::try_from(pos).unwrap();
         let obj: (u64, Vec<String>) = (pos, path);
         serde_json::to_writer_pretty(file, &obj)?;
-        /*writeln!(file, "[")?;
-        writeln!(file, "    {:?},", u64::try_from(pos).unwrap())?;
-        writeln!(file, "    [")?;
-        writeln!(
-            file,
-            "    {}",
-            path.iter()
-                .map(|x| hex::encode(&x.to_bytes()))
-                .map(|x| format!("\"{}\"", x))
-                .collect::<Vec<String>>()
-                .join(",\n    ")
-        )?;
-        writeln!(file, "    ]")?;
-        writeln!(file, "]")?;*/
     }
-    /*
-    for (leaf, pos) in positions.into_iter() {
-        println!("{:?}", leaf);
-        println!("{:?}", pos);
-        let path: Vec<MerkleHashOrchard> = tree.authentication_path(pos, &root).expect("no path");
-        println!("[");
-        for x in path.iter() {
-            println!("    \"{}\",", hex::encode(&x.to_bytes()));
-        }
-        println!("]");
-        println!("---");
-    }
-    */
-
     Ok(())
 }

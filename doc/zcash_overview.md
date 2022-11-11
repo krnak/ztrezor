@@ -203,13 +203,13 @@ ua_encoded := F4Jumble(ua_bytes || padding)
 unified_address := hrp || Bech32m(ua_encoded)
 ```
 
-where `F4Jumble` is an unkeyed 4-round Feistel construction to approximate a random permutation described in [ZIP-316](https://github.com/zcash/zips/blob/main/zip-0316.rst). This function makes it computationally impossible to generate two lexicographically close addresses. Therefore it should be sufficient to check only first 16 bytes when spending to UA (not confirmed, just my reasoning).
+where `F4Jumble` is an unkeyed 4-round Feistel construction to approximate a random permutation described in [ZIP-316](https://github.com/zcash/zips/blob/main/zip-0316.rst). This function makes it computationally impossible to generate two lexicographically close addresses. According to the ZIP-316, it is sufficient to check only first 20??? symbols of UA (when spending to UA).
 
 UA's components are ordered by priority according to this priority list:
 
 1. Orchard
 2. Sapling
-3. transparent (P2SH and P2PKH)
+3. transparent (P2SH or P2PKH)
 
 Each address type (Orchard, Sapling, transparent) may be included only once. Otherwise UA will be rejected. UA containing only a transparent address will be rejected.
 

@@ -5,41 +5,6 @@ from trezorlib.messages import (
 )
 from tx import Tx
 
-CASES = [
-    # t2z
-    Tx(
-        name="t2z",
-        funding=[("m/44h/1h/0h/0/0", BASE)],
-        outputs=[ZcashOrchardOutput(amount=BASE - FEE)],
-        expect=None,
-    ),
-    Tx(
-        name="z2z",
-        funding=[("m/32h/1h/0h", BASE)],
-        outputs=[ZcashOrchardOutput(amount=BASE - FEE)],
-        expect=None,
-    ),
-    Tx(
-        name="z2t",
-        outputs=[
-            TxOutputType(
-                address_n=parse_path("m/44h/1h/0h/0/0"),
-                amount=BASE - FEE,
-                script_type=OutputScriptType.PAYTOADDRESS,
-            )
-        ],
-        funding=[("m/32h/1h/0h", BASE)],
-        expect=None,
-    ),
-    # long mem
-    # many inputs
-    # dust inputs
-    # many outputs
-    # too many action
-    # self forward
-    # to big fee
-]
-
 ADDRESS = [
     "utest1gu6rg6hse8v0pd7mhgfn80v5vvdhuwn30wztyrczxsyj46ngpp2ryw36az6vlmlle8xns5k6pdlkgycr27naa2hpn3wspuvsxv0yzz62",
     "utest1rgn5dkcq9vcf3vr7el74m2p2lslfw9ndn9dqm44ram756f544fndvd82ecv37gkxuum8mr8yrtjlnjwumgn48qrqlhch4znnqselfr5j",
@@ -53,7 +18,31 @@ ADDRESS = [
     "utest1rusrelt7xyc62chav9r6cv5nnxp63eemm3rm0qpaqs578hkjpr9rgyvuyjm3nxpcjfx8a7dquyt2shkw5xl23m523t3cgkt7wsd9mue3",
 ]
 
-CASES_2 = [
+CASES = [
+    Tx(
+        name="t2z",
+        funding=[("m/44h/1h/0h/0/0", BASE)],
+        outputs=[ZcashOrchardOutput(amount=BASE - FEE)],
+        expect="gen",
+    ),
+    Tx(
+        name="z2z",
+        funding=[("m/32h/1h/0h", BASE)],
+        outputs=[ZcashOrchardOutput(amount=BASE - FEE)],
+        expect="gen",
+    ),
+    Tx(
+        name="z2t",
+        outputs=[
+            TxOutputType(
+                address_n=parse_path("m/44h/1h/0h/0/0"),
+                amount=BASE - FEE,
+                script_type=OutputScriptType.PAYTOADDRESS,
+            )
+        ],
+        funding=[("m/32h/1h/0h", BASE)],
+        expect="gen",
+    ),
     Tx(
         name="long_memo",
         funding=[("m/32h/1h/0h", BASE)],
@@ -62,11 +51,21 @@ CASES_2 = [
             amount=BASE - FEE,
             memo="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Enim tortor at auctor urna nunc. Urna porttitor rhoncus dolor purus non enim praesent elementum facilisis. Amet purus gravida quis blandit turpis cursus in hac. Eu non diam phasellus vestibulum lorem sed risus. Pellentesque elit ullamcorper dignissim cras tincidunt. Egestas purus viverra accumsan in nisl nisi scelerisque eu ultrices. Morbi tincidunt ornare massa eget egestas purus.",
         )],
-        expect=None,
+        expect="gen",
+    ),
+    Tx(
+        name="too_long_memo",
+        funding=[("m/32h/1h/0h", BASE)],
+        outputs=[ZcashOrchardOutput(
+            address="utest1xt8k2akcdnncjfz8sfxkm49quc4w627skp3qpggkwp8c8ay3htftjf7tur9kftcw0w4vu4scwfg93ckfag84khy9k40yanl5k0qkanh9cyhddgws786qeqn37rtyf6rx4eflz09zk06",
+            amount=BASE - FEE,
+            memo="this memo hash 513 bytes this memo hash 513 bytes this memo hash 513 bytes this memo hash 513 bytes this memo hash 513 bytes this memo hash 513 bytes this memo hash 513 bytes this memo hash 513 bytes this memo hash 513 bytes this memo hash 513 bytes this memo hash 513 bytes this memo hash 513 bytes this memo hash 513 bytes this memo hash 513 bytes this memo hash 513 bytes this memo hash 513 bytes this memo hash 513 bytes this memo hash 513 bytes this memo hash 513 bytes this memo hash 513 bytes this memo has",
+        )],
+        expect="gen",
     ),
     Tx(
         name="dust_inputs",
-        funding=[12*("m/32h/1h/0h", BASE)],
+        funding=12*[("m/32h/1h/0h", BASE)],
         outputs=[
             ZcashOrchardOutput(
                 address=ADDRESS[9],
@@ -74,11 +73,11 @@ CASES_2 = [
                 memo="dust inputs",
             )
         ],
-        expect=None,
+        expect="gen",
     ),
     Tx(
         name="big_bundle",
-        funding=[8*("m/32h/1h/0h", BASE)],
+        funding=8*[("m/32h/1h/0h", BASE)],
         outputs=[
             ZcashOrchardOutput(
                 address=ADDRESS[i],
@@ -86,18 +85,20 @@ CASES_2 = [
             )
             for i in range(8)
         ],
-        expect=None,
-    )
+        expect="gen",
+    ),
     # too many actions
     Tx(
         name="too_large_fee",
-        funding=[("m/32h/1h/0h", int(0.5 * ZEC))],
+        funding=2*[("m/32h/1h/0h", BASE)],
         outputs=[ZcashOrchardOutput(
             address="utest1xt8k2akcdnncjfz8sfxkm49quc4w627skp3qpggkwp8c8ay3htftjf7tur9kftcw0w4vu4scwfg93ckfag84khy9k40yanl5k0qkanh9cyhddgws786qeqn37rtyf6rx4eflz09zk06",
-            amount=int(0.1 * ZEC),
+            amount=BASE - FEE,
             memo="too large fee",
         )],
-        expect=None,
+        expect=[
+            "too large fee",
+        ],
     ),
     Tx(
         name="send_to_account_2",
@@ -107,7 +108,7 @@ CASES_2 = [
             amount=BASE - FEE,
             memo="from acount 0 to acount 2",
         )],
-        expect=None,
+        expect="gen",
     ),
     Tx(
         name="send_from_account_2",
@@ -117,7 +118,7 @@ CASES_2 = [
             amount=BASE - FEE,
             memo="from acount 2 to account 0",
         )],
-        expect=None,
+        expect="gen",
         account=2,
     )
 ]
