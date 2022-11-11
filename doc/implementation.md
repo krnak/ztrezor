@@ -63,10 +63,6 @@ reddsa_sign = 2 * blake + field_mul + 2 * curve_mul
 #### Shielding
 
 
-## Shortened shielding flow
-
-![shielding data flow](shielding_flow.png)
-
 ## Transaction signing flow
 
 In this section I will describe how a shielded transaction is signed. This process can be separated into three phases.
@@ -205,7 +201,9 @@ All randomness is computed by the Host. Trezor just verifies effect of the trans
 + easy and efficient
 + parallelizable
 
+## Shortened shielding flow
 
+![shielding data flow](shielding_flow.png)
 
 
 ## External Zcash crates
