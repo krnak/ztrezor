@@ -82,6 +82,7 @@ were already computed in the first phase. On contrary, Orchard bundle sighash co
 commitments_digest, memos_digest, notes_digest
 ```
 must be computed now. This requires following steps:
+
 1. Trezor derives a _bundle shielding seed_, from which all the randomness necessary for bundle shielding is derived. Trezor send this seed to the Host.
 1. Since result of Orchard bundle shielding is completely determined by the set of Orchard inputs and outputs, anchor, flags and _bundle shielding seed_, the Host can replicate all following steps (3-8) to get the Orchard bundle. While Trezor is computing the bundle shielding to get its sighash, Host can compute a bundle authorizing proof in parallel.
 1. Trezor makes the set of shielded inputs equal in size to the set of shielded outputs by padding the smaller one with dummy notes.
@@ -93,7 +94,7 @@ must be computed now. This requires following steps:
     1. Trezor derives _action shielding seed_ from the _bundle shielding seed_ and Action index.
     1. Trezor shields the Action and updates sighasher state by action components.
 1. Trezor finishes the computation of Orchard bundle sighash by adding _anchor_, _value balance_ and _flags_ to the hash state.
-
+    
 Shielding one Action (step 6.iv.) consists of:
 - derivation of all necessary randomness computed from the _action shielding seed_
 - derivation of the dummy input or output
