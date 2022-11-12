@@ -1,5 +1,3 @@
-:warning: This document is work in progress. :warning:
-
 # Trezor support for Zcash shielded transaction  
 
 The goal of this document is to explain how Zcash Orchard shielded transactions are implemented in Trezor. This document has three sections:

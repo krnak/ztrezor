@@ -1,25 +1,28 @@
-# Implementation
-
 ## Security model
 
 <img src="interactions.png" alt="Trezor - Host - User - full node interactions" width="600"/>  
 
-Our communication scheme consists of four players: an user, a hardware wallet (HWW), a host (typically a PC or a cell phone) and Zcash fullnode (a server maintaining a full blockchain copy).
+Our communication scheme consists of four players: an user, a hardware wallet (HWW), a host (typically a desktop or a cell phone) and Zcash fullnode (a server maintaining a full blockchain copy).
 
 Threat model for communication between host and fullnode is described in [Zcash doc](https://zcash.readthedocs.io/en/latest/rtd_pages/wallet_threat_model.html). In this section we focus only to the communication between the host, the user and the HWW.
 
-Our security goals differs according to following two scenarios:  
+Our security goal:
 
-1. If the **Host is honest**, then all Zcash privacy features are preserved.
-2. Even if the **Host is malicious**, he cannot create a valid transaction with undesired effects. However, he can violate all Zcash privacy features.
+**User has complete control over the effect of his transactions.**
+
+I.e. for every user's transaction, transaction fee and transaction's outputs (address, value, memo) cannot be tampered by a mallicious host.
+
+Our privacy limitations:
+
+**A host has viewing access to user's account.**
 
 Every shielded transaction is authorized by a zero knowledge proof. Since compution of this proof is computationally demanding, this task must be delaged to the host. To do so, Full Viewing Key (FVK), which guarantees full access to the user's transaction history, must be revealed to the host. There no way how HWW can prevent a malicious host from sharing FVK with an attacker.
 
-(Even if a mallicious host were locked into some sandbox without access to any side-channel, it can send FVK to an attacker by secretly encoding it into a transaction itself by manipulating proof randomness. Attacker then gains FVK by scanning every transaction in the blockchain.)
+(Even if a mallicious host were locked into some sandbox without access to any side-channel, it can send FVK to an attacker by secretly encoding it into a transaction itself by manipulating proof randomness.)
 
 ## Comparison with the Ledger
 
-- We implement Orchard shielded protocol, while Ledger implemented the Sapling shielded protocol.
+- We implement _Orchard_ shielded protocol, while Ledger implemented the _Sapling_ shielded protocol.
 - We have no control over the proof randomness. (Ledger maybe wont too after the NU5.)
 - We don't have to worry about memory optimizations so much.
 
@@ -34,8 +37,8 @@ Hashing to the Pallas is realized by simplified version of SWU algoritm. Since l
 
 #### Algorithms efficiency
 ```python
-fiel_mul = ?
-blake = ?
+# fiel_mul - one field multiplication
+# blake - one blake2b digest
 
 curve_add = 14 * field_mul
 curve_double = 7 * field_mul
@@ -45,7 +48,7 @@ isogeny = 33 * field_mul
 field_sqrt = 822 * field_mul
 hash_to_field = 3 * blake
 map_to_curve = 19 * field_mul + 2 * field_sqrt = 1663 * field_mul
-hash_to_curve = hash_to_field + 2 * map_to_curve + isogeny + curve_add = 3 * BLAKE + 3373 * field_mul
+hash_to_curve = hash_to_field + 2 * map_to_curve + isogeny + curve_add = 3 * blake + 3373 * field_mul
 
 sinsemilla_block = hash_to_curve + 2 * curve_add
 commit_ivk = 51 * sinsemilla_block + curve_mul + curve_add
@@ -55,64 +58,41 @@ reddsa_sign = 2 * blake + field_mul + 2 * curve_mul
 
 #### ZIP-32
 #### Address generation
-#### Shielding
 
 
-## Shortened shielding flow
+## Trezor <-> Host interation
 
-![shielding data flow](shielding_flow.png)
+Transaction is authorized by zero-knowledge proof. We delegate computation of this proof to the host. We considered several models of interaction between HWW and the prover algorithm. They differ in the way how shielding randomness (transaction blinding factors) were created.
 
-## Transaction signing flow
+#### Randomness by Trezor
 
-In this section I will describe how a shielded transaction is signed. This process can be separated into three phases.
+This is excluded, because all Trezor responses must be deterministic.
 
-1. confirm transaction
-2. shield transaction and compute its sighash
-3. retrieve signatures
+#### Randomness by Host
 
-In the first phase, transaction details are requested by Trezor. All transaction inputs and outputs (both transparent and shielded) are requested by Trezor one by one. Trezor requires user to confirm transaction outputs and fee. At the same time it incrementally updates digest of all received data to authentize them in phase 2.
+In this model all randomness is computed by the Host. Trezor just verifies effect of the transaction. I.e. Trezor gets a serialized shielded Orchard bundle and it decrypts its effect.
 
-Transaction sighash is computed in the second phase. From now, let call different parts of the transaction _bundles_. For sighash of the transparent bundle, hash components
-- `prevouts_digest`,
-- `amounts_digest`,
-- `scriptpubkeys_digest`,
-- `sequence_digest` and
-- `outputs_digest`
-were already computed in the first phase. On contrary, Orchard bundle sighash components
-- `commitments_digest`,
-- `memos_digest` and
-- `notes_digest`
-must be computed now. This requires following steps:
-1. Trezor derives a _bundle shielding seed_, from which all the randomness necessary for bundle shielding is derived. Trezor send this seed to the Host.
-2. Since result of Orchard bundle shielding is completely determined by the set of Orchard inputs and outputs, anchor, flags and _bundle shielding seed_, the Host can replicate all following steps (3-8) to get the Orchard bundle. While Trezor is computing the bundle shielding to get its sighash, Host can compute a bundle authorizing proof in parallel.
-3. Trezor makes the set of shielded inputs equal in size to the set of shielded outputs by padding the smaller one with dummy notes.
-4. Trezor shuffles shielded inputs and output and zip them into Actions.
-5. Trezor precomputes the Full Viewing Key for the account from which is being spent.
-6. Trezor start incremental computation of the Orchard bundle sighash. For each action:
-7.1. Trezor request the action input (if it is not dummy).
-7.2. Trezor request the action output (if it is not dummy).
-7.3. Trezor derives _action shielding seed_ from the _bundle shielding seed_ and Action index.
-7.4. Trezor shields the Action and updates sighasher state by action components. This computation includes:
-- derivation of all necessary randomness computed from the _action shielding seed_
-- derivation of the dummy input or output
-- computation of input note nullifier
-- randomization of spend validating key
-- computation of output note commitmnet
-- computation of the value commitment
-- encryption of the note plaintext
-- encryption of the outgoing note plaintext
-8. Trezor finishes the computation of Orchard bundle sighash by hashing all its components with _anchor_, _value balance_ and _flags_.
+This approach has several issues:
 
-There two reasons, why components of Orchard bundle are not computed already in the first phase.
-1. Since Orchard bundle shielding is computationally demanding, this would cause (approx. 12s) delays between confirmations of individual shielded outputs.
-2. We want to let the user to confirm transaction outputs in the same order he entered them on the Host and then compute sighash on shuffled outputs.
+1. Dummy outputs are not decryptable by default. It follows that Trezor cannot check these outputs. This could be solved by attaching Incoming Vieving Key to every output dummy Note.
+2. Recipent address of an output cannot be recovered from Orchard Bundle data due to the nature of Unified Addresses. The Bundle contains only information about the Orchard receiver of the unified address. The recipient address cannot be recovered without knowledge of other receivers of the address. This could be solved by attaching original plaintext address to every output.
+3. Trezor cannot check genuinity of Bundle shielding randomness.
+Pros:
+- Nullifiers dont have to be recomputed.
 
+#### Randomness derived from a seed
 
-## Randomness derivation
+In this model all randomness is derived from some random seed. Both parties, Trezor and the host, use this seed to shield the bundle, getting the same result. This approach is quite efficient for the Trezor, because it does not require Trezor to request nor store so much data.
 
-The _bundle shielding seed_ is derived as follows:
+I chose this approach.
+
+### Randomness derivation from a seed
+
+(this section has a documentation character and can be skipped)
+
+The main seed - _bundle shielding seed_ - is derived as follows:
 ```python
-ss_slip21 = self.keychain.derive_slip21(
+ss_slip21 = keychain.derive_slip21(
     [b"Zcash Orchard", b"bundle_shielding_seed"],
 ).key()
 bundle_shielding_seed = blake2b(
@@ -180,70 +160,99 @@ shuffle(x) = do
         x[i], x[j] = x[j], x[i]
 ```
 
-## Authorization proof
+## Sign transaction flow
 
-Transaction is authorized by zero-knowledge proof. We delegate computation of this proof to the host. We considered several models of interaction between HWW and the prover algorithm.
+In this section I will describe how a shielded transaction is signed. This process can be separated into three phases.
 
-#### Randomness by Host
+1. confirm transaction
+2. shield transaction and compute its sighash
+3. retrieve signatures
 
-All randomness is computed by the Host. Trezor just verifies effect of the transaction.
+In the first phase, transaction details are requested by Trezor. All transaction inputs and outputs (both transparent and shielded) are requested by Trezor, one by one. Trezor requires user to confirm transaction outputs and fee. At the same time it incrementally updates digest of all received data to authentize them in phase 2.
 
-- harder to analyze
-- non-verifiable randomness
+Transaction sighash is computed in the second phase. From now, let call different parts of the transaction _bundles_. For sighash of the transparent bundle, hash components
+```
+prevouts_digest, amounts_digest, scriptpubkeys_digest, sequence_digest and outputs_digest
+```
+were already computed in the first phase. On contrary, Orchard bundle sighash components  
+```
+commitments_digest, memos_digest, notes_digest
+```
+must be computed now. This requires following steps:
 
-+ no need for Poseidon
-+ parallelizable
+1. Trezor derives a _bundle shielding seed_, from which all the randomness necessary for bundle shielding is derived. Trezor send this seed to the Host.
+1. Since result of Orchard bundle shielding is completely determined by the set of Orchard inputs and outputs, anchor, flags and _bundle shielding seed_, the Host can replicate all following steps (3-8) to get the Orchard bundle. While Trezor is computing the bundle shielding to get its sighash, Host can compute a bundle authorizing proof in parallel.
+1. Trezor makes the set of shielded inputs equal in size to the set of shielded outputs by padding the smaller one with dummy notes.
+1. Trezor shuffles shielded inputs and output and zip them into Actions.
+1. Trezor precomputes the Full Viewing Key for the account from which is being spent.
+1. Trezor start incremental computation of the Orchard bundle sighash. For each action:
+    1. Trezor request the action input (if it is not dummy).
+    1. Trezor request the action output (if it is not dummy).
+    1. Trezor derives _action shielding seed_ from the _bundle shielding seed_ and Action index.
+    1. Trezor shields the Action and updates sighasher state by action components.
+1. Trezor finishes the computation of Orchard bundle sighash by adding _anchor_, _value balance_ and _flags_ to the hash state.
 
-#### Randomness derived from a seed
+There two reasons, why components of Orchard bundle are not computed already in the first phase.
+1. Since Orchard bundle shielding is computationally demanding, this would cause (approx. 12s) delays between confirmations of individual shielded outputs.
+2. We want to let the user to confirm transaction outputs in the same order he entered them on the Host and then compute sighash on shuffled outputs.
 
-- harder to code
-+ easy and efficient
-+ parallelizable
+![sign tx flow](sign_tx_flow.png)
 
+Shielding one Action (step 6.iv.) consists of:
+- derivation of all necessary randomness computed from the _action shielding seed_
+- derivation of the dummy input or output
+- computation of input note nullifier
+- randomization of spend validating key
+- computation of output note commitmnet
+- computation of the value commitment
+- encryption of the note plaintext
+- encryption of the outgoing note plaintext
 
+![shielding data flow](shielding_flow.png)
 
+### Message accumulator
 
-## `trezor-firmware` implementation
+Whenever Trezor re-requests some part of a transaction, it must check response integrity with the response it got the fist time.
 
-Zcash libraries are now available in Rust. I would like to use them directly as dependencies. It will be necessary to make them `![no_std]` compatible.
+In case of transaparent input (resp. outputs), this is easy. Trezor always iterates the sequence of inputs in the same order. Thus Trezor just always compute a digest of the sequence (which can be computed incrementally) and compares it with the first digest it got.
 
-| library | no_std | alloc |
-| -       | -      | -     |
-| [f4jumble](https://github.com/zcash/librustzcash/components/f4jumble) | :heavy_check_mark: | :heavy_check_mark: |
-| [zcash_note_encryption](https://github.com/zcash/librustzcash/components/f4jumble) | :heavy_check_mark: | :heavy_check_mark: |
-| [orchard](https://github.com/zcash/orchard) | in process | :heavy_check_mark: |
-| [pasta_curves](https://github.com/zcash/pasta_curves) | :heavy_check_mark: | :heavy_check_mark: |
-| [reddsa](https://github.com/str4d/redjubjub) | :heavy_check_mark: | :heavy_check_mark: |
-| [fpe](https://github.com/str4d/fpe) | in progress | :heavy_check_mark: |
-| poseidon | almost | almost |
+In case of shielded inputs (resp. outputs), this is more complicated, because orders of these are shuffled before shielding. Fortunetly, we can exploit parallelizability of HMAC to overcome this issue. Messages digest is computed as follows
 
-## Zcash codebase analysis
+```python
+# derive a secret key
+key = keychain.derive_slip21(
+    [b"Zcash Orchard", b"Message Accumulator"],
+).key()
 
-Zcash repositores relevant to this project are generally written in Rust.
-#### Orchard
-- [librustzcash]()
-  - [zcash_note_encryption]()
-  - [f4jumble]()
-- [orchard]()
-- [reddsa]()
-- [pasta_curves]()
-- [halo2_gadgets]()
-- [halo2_proofs]()
-- [incrementalmerkletree]()
+# derive an unique mask for every message type and message index
+mask_preimage[i][j] = i.to_bytes(2, "big") || j.to_bytes(4, "little") || 26*[0]
+mask[i][j] = aes(key).encode(mask_preimage[i][j])
 
-#### Cryptography
-- [ff]()
-- [group]()
-- [fpe]()
-- [subtle]()
+# initialize accumulator with zeros
+initial_accumulator_state = 32 * [0]
 
-#### Wallet
-- [zcashd]() / [zebrad]()
-- [lightwalletd]()
-- [zingolib]()
+# update the accumulator in an arbitrary order
+update_accumulator(msg, msg_index, state) = do
+    msg_digest = sha256(protobuf.dump_message_buffer(msg)).digest()
+    msg_mask = mask[msg.code][msg_index]
+    state = state xor aes(key).encode(msg_mask xor msg_digest)
+```
 
-## `trezorlib` implementation
+Probably, just a xor of hmacs of tuples (message, index) would be secure too. The scheme above follows HMAC construction, which is **provably** secure. Construction differs in these points:
+1. Original scheme supposes usage of Galois counter for mask derivation to increase scheme efficiency. We want to avoid any incremental computation (and Galois counter implementation). The only requirement on input mask is uniformity and unpredictability. This is satisfied by our scheme.
+2. We ommit the last step of the HMAC construction, where xor sum is encrypted, because this sum never leaves the Trezor.
 
-[lightwalletd](https://github.com/zcash/lightwalletd) (coded in Go lang) can be used for communication with a full node.
+## External Zcash crates
 
-[halo2](https://github.com/zcash/halo2) crate (coded in Rust) will be used for proof computation.
+All Zcash crypto libraries are available in Rust. I wanted to use them directly as dependencies, but I run into many issues, so I ended up with using only `pasta_curves` crate.
+
+| library | alloc  | no_std | used | issue |
+| -       | -      | -      | -    | -     |
+| [pasta_curves](https://github.com/zcash/pasta_curves)                              | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | used , but alloc-indepentdent `hash_to_curve` function is missing |
+| [f4jumble](https://github.com/zcash/librustzcash/components/f4jumble)              | :heavy_check_mark: | :heavy_check_mark: | :x: | was fine, but replaced by 40 lines of python code |
+| [zcash_note_encryption](https://github.com/zcash/librustzcash/components/f4jumble) | :heavy_check_mark: | :heavy_check_mark: | :x: | usable only through `orchard` crate |
+| [orchard](https://github.com/zcash/orchard)                                        | :x:                | :x:                | :x: | Only some functionalities from orchard crate are needed. The crate itself is quite complex, so I doesn't worth to try divide it into necessary and unnecessary part. |
+| [reddsa](https://github.com/str4d/redjubjub)                                       | :heavy_check_mark: | :heavy_check_mark: | :x: | Works nicely, but can by replaced by 15 python lines and does not support deterministic randomness, which we need. |
+| [fpe](https://github.com/str4d/fpe)                                                | :heavy_check_mark: | :x: | :x: | inefficient, heavy, depends on `big-num` crate, which is also quite heavy and alloc-dependant |
+| [sinsemilla]()                                                                     | :heavy_check_mark: | :x:                | :x: | Requires 64kb of precomputed data to be stored. |
+| [poseidon]()                                                                       | :heavy_check_mark: | :x:                | :x: | Too heavy. `Spec::constants` method is memory inefficient and alloc-dependant and it's hard to redesign it. |
