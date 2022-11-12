@@ -196,6 +196,8 @@ There two reasons, why components of Orchard bundle are not computed already in 
 1. Since Orchard bundle shielding is computationally demanding, this would cause (approx. 12s) delays between confirmations of individual shielded outputs.
 2. We want to let the user to confirm transaction outputs in the same order he entered them on the Host and then compute sighash on shuffled outputs.
 
+![sign tx flow](sign_tx_flow.png)
+
 Shielding one Action (step 6.iv.) consists of:
 - derivation of all necessary randomness computed from the _action shielding seed_
 - derivation of the dummy input or output
