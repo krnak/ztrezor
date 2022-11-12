@@ -160,7 +160,7 @@ shuffle(x) = do
         x[i], x[j] = x[j], x[i]
 ```
 
-## Transaction signing flow
+## Sign transaction flow
 
 In this section I will describe how a shielded transaction is signed. This process can be separated into three phases.
 
