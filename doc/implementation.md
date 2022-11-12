@@ -210,7 +210,7 @@ Shielding one Action (step 6.iv.) consists of:
 
 ![shielding data flow](shielding_flow.png)
 
-### Parallelizable MAC
+### Message accumulator
 
 Whenever Trezor re-requests some part of a transaction, it must check response integrity with the response it got the fist time.
 
