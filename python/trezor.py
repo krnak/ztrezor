@@ -8,6 +8,19 @@ import json
 from base64 import b64encode
 from pprint import pprint
 
+import logging
+import sys
+
+root = logging.getLogger()
+root.setLevel(logging.DEBUG)
+
+handler = logging.StreamHandler(sys.stdout)
+handler.setLevel(logging.DEBUG)
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+handler.setFormatter(formatter)
+root.addHandler(handler)
+
+
 H = 1 <<31
 ZEC = 10**8
 FEE = int(0.0001 * ZEC)
@@ -66,7 +79,7 @@ out1 = proto.TxOutputType(
     #address="t14oHp2v54vfmdgQ3v3SNuQga8JKHTNi2a1",
     #address="t1Lv2EguMkaZwvtFQW5pmbUsBw59KfTEhf4",
     address="tmQoJ3PTXgQLaRRZZYT6xk8XtjRbr2kCqwu",
-    amount=1*ZEC,
+    amount=1*ZEC - FEE,
     script_type=proto.OutputScriptType.PAYTOADDRESS,
 )
 out_ua = proto.TxOutputType(
@@ -183,8 +196,8 @@ fvk = bytes.fromhex("d38d537a1195343afb128a58958f2cba8f6435488fa57e1a09c23451a07
 
 
 config_1 = {
-    "inputs": [inp1],
-    "outputs": [sout3],
+    "inputs": [inp1, real_inp],
+    "outputs": [out1, sout2],
 }
 config = config_1
 
@@ -193,16 +206,20 @@ protocol = zcash.sign_tx(
     client,
     coin_name="Zcash Testnet",
     anchor=anchor,
-    verbose=True,
     **config,
 )
 
-shielding_seed = next(protocol)
-sighash = next(protocol)
-print("sighash:", list(sighash))
-signatures, serialized_tx = next(protocol)
+if (
+    len(list(filter(lambda x: isinstance(x, messages.ZcashOrchardInput), config["inputs"]))) +
+    len(list(filter(lambda x: isinstance(x, messages.ZcashOrchardOutput), config["outputs"])))
+    != 0
+):
+    shielding_seed = next(protocol)
+    sighash = next(protocol)
+    print("sighash:", list(sighash))
+    signatures, serialized_tx = next(protocol)
 
-if len(config["o_inputs"] + config["o_outputs"]) > 0 and input("=== prove (y/N):") == "y":
+if False and len(config["o_inputs"] + config["o_outputs"]) > 0 and input("=== prove (y/N):") == "y":
     import time
     from py_trezor_orchard import *
 
