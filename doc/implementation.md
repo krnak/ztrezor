@@ -56,8 +56,8 @@ commit_note = 109 * sinsemilla_block + curve_mul + curve_add
 reddsa_sign = 2 * blake + field_mul + 2 * curve_mul
 ```
 
-#### ZIP-32
-#### Address generation
+TODO: ZIP-32
+TODO: Address generation
 
 
 ## Trezor <-> Host interation
