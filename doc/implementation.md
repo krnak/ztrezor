@@ -239,7 +239,7 @@ update_accumulator(msg, msg_index, state) = do
 ```
 
 Probably, just a xor of hmacs of tuples (message, index) would be secure too. The scheme above follows HMAC construction, which is **provably** secure. Construction differs in these points:
-1. Original scheme supposes usage of Galois counter for mask derivation to increase scheme efficiency. We want to avoid any incremental computation (and Galois counter implementation). The only requirement on input mask is uniformity and unpredictability. This is satisfied by our scheme.
+1. Original scheme uses the Galois counter for mask derivation to increase scheme efficiency. We want to avoid any incremental computation (and Galois counter implementation). The only requirement on input mask is uniformity and unpredictability. This is achived by encrypting tuples `(message_type, messsage_index)` by AES.
 2. We ommit the last step of the HMAC construction, where xor sum is encrypted, because this sum never leaves the Trezor.
 
 ## External Zcash crates
