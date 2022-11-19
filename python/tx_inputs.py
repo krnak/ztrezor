@@ -6,7 +6,7 @@ from py_trezor_orchard import OrchardInput
 
 class TxInput:
     def __init__(self, **kwargs):
-        for k, v in kwargs:
+        for k, v in kwargs.items():
             setattr(self, k, v)
 
 
@@ -36,7 +36,7 @@ class OInput(TxInput):
         return self.note["value"]
 
 
-def TInput(TxInput):
+class TInput(TxInput):
     def path(self):
         x = self.inner.address_n
         H = 2 ** 31

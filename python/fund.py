@@ -4,14 +4,15 @@ import json
 import subprocess
 from datetime import datetime
 import os
-from note import Note, get_notes
-
+from pprint import pprint
 from common import *
 import cases
 from tx import Tx
 from py_trezor_orchard import *
 import api
 import getcmxs
+import zingo
+from tx_inputs import TInput, OInput
 
 from trezorlib.messages import (
     TxInputType, TxOutputType, OutputScriptType,
@@ -100,7 +101,42 @@ def get_utxos():
 
 
 def get_resources():
-    return {**get_utxos(), **get_utxns()}
+    utxos = zingo.notes()
+    resources = {}
+    for note in utxos["unspent_orchard_notes"]:
+        o_input = OInput(
+            note={
+                "recipient": bytes.fromhex(note["note_recipient"]),
+                "value": note["value"],
+                "rho": bytes.fromhex(note["note_rho"]),
+                "rseed": bytes.fromhex(note["note_rseed"]),
+            },
+            account=0,
+            witness=(
+                note["merkle_tree_position"],
+                list(map(bytes.fromhex, note["merkle_tree_path"]))
+            ),
+        )
+        key = (o_input.path(), o_input.value())
+        if key not in resources:
+            resources[key] = []
+        resources[key].append(o_input)
+
+    for utxo in utxos["utxos"]:
+        t_input = TInput(inner=TxInputType(
+            address_n=parse_path("m/44h/1h/0h/0/0"),  # TODO
+            amount=utxo["value"],
+            prev_hash=bytes.fromhex(utxo["created_in_txid"]),
+            prev_index=utxo["output_index"],
+            script_type=InputScriptType.SPENDADDRESS,
+        ))
+        key = (t_input.path(), t_input.value())
+        if key not in resources:
+            resources[key] = []
+        resources[key].append(t_input)
+
+    return resources
+    #return {**get_utxos(), **get_utxns()}
 
 
 def merge_rendered():
@@ -160,7 +196,8 @@ def create_account_2_notes():
     tx.send()
 
 if __name__ == "__main__":
-    from_the_beginning()
+    pprint(get_resources())
+    # from_the_beginning()
 
     """
     txs = [Tx.load(x.name) for x in cases.CASES]
