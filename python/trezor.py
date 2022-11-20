@@ -1,6 +1,6 @@
 import trezorlib
 from trezorlib.client import get_default_client
-from trezorlib import btc, messages, protobuf, zcash
+from trezorlib import btc, messages, protobuf, zcash, tools
 from trezorlib.messages import ZcashSignatureType as SigType
 from trezorlib.exceptions import TrezorFailure
 from trezorlib.tools import parse_path
@@ -206,6 +206,7 @@ protocol = zcash.sign_tx(
     client,
     coin_name="Zcash Testnet",
     anchor=anchor,
+    z_address_n=tools.parse_path("m/32h/1h/0h"),
     **config,
 )
 

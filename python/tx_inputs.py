@@ -1,5 +1,4 @@
 import json
-import ref
 from trezorlib.messages import ZcashOrchardInput
 from py_trezor_orchard import OrchardInput
 
@@ -8,6 +7,15 @@ class TxInput:
     def __init__(self, **kwargs):
         for k, v in kwargs.items():
             setattr(self, k, v)
+
+    def path(self):
+        raise NotImplementedError
+
+    def value(self):
+        raise NotImplementedError
+
+    def as_trezor_input(self):
+        raise NotImplementedError
 
 
 class OInput(TxInput):
@@ -60,15 +68,3 @@ class TInput(TxInput):
             }[txo["script_hex"]],
         )
     """
-
-
-def get_free_input(path, value=None):
-
-    for txi in list(ref.get_every(TInput)) + list(ref.get_every(OInput)):
-        if (
-            txi.i.belongs_to is None and
-            txi.i.path() == path and
-            (value is None or txi.i.value() == value)
-        ):
-            return txi
-    raise ValueError("Not enoght funding")

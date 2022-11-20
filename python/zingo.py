@@ -12,12 +12,15 @@ def call(command):
         ],
         stdout=subprocess.PIPE,
     )
-    while "{\n  \"result\": \"success\"\n}\n" not in result.stdout.decode():
-        time.sleep(0.1)
+    while "\"result\": \"success\"" not in result.stdout.decode():
+        time.sleep(1)
+        print("waiting for zingo to connect")
     while "unspent_orchard_notes" not in result.stdout.decode():
-        time.sleep(0.1)
-    result = result.stdout.decode().split("{\n  \"result\": \"success\"\n}\n")[1]
-    print(f"\n\n{ result } \n\n")
+        time.sleep(1)
+        print("waiting for zingo notes")
+    result = result.stdout.decode().split("Lightclient connecting to http://127.0.0.1:9067/\n")[1]
+    result = "{\n" + result.split("\n}\n{\n")[1]
+    # print(f"\n\n{ result } \n\n")
     return json.loads(result)
 
 

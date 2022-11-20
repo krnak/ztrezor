@@ -64,42 +64,6 @@ def update_paths():
     subprocess.run(['/home/agi/code/ztrezor/client/target/debug/client'])
 
 
-def get_utxns():
-    resources = dict()
-    notes = get_notes()
-    for note in notes:
-        key = (note.path(), note.value())
-        if key not in resources:
-            resources[key] = []
-        if note.has_witness():
-            resources[key].append(note)
-        else:
-            print(f"no witness for {note.cmx}")
-    return resources
-
-
-def get_utxos():
-    resources = dict()
-    for txo in api.get_tx_unspent("tmQoJ3PTXgQLaRRZZYT6xk8XtjRbr2kCqwu"):
-        amount = int(float(txo["value"]) * ZEC)
-        key = ("m/44h/1h/0h/0/0", amount)
-        if key not in resources:
-            resources[key] = []
-        resources[key].append(
-            TxInputType(
-                address_n=parse_path("m/44h/1h/0h/0/0"),
-                amount=amount,
-                prev_hash=bytes.fromhex(txo["txid"]),
-                prev_index=txo["output_no"],
-                script_type={
-                    "76a914a579388225827d9f2fe9014add644487808c695d88ac": InputScriptType.SPENDADDRESS,
-                    #"scripthash": InputScriptType.PAYTOSCRIPTHASH,
-                }[txo["script_hex"]],
-            )
-        )
-    return resources
-
-
 def get_resources():
     utxos = zingo.notes()
     resources = {}
@@ -116,6 +80,7 @@ def get_resources():
                 note["merkle_tree_position"],
                 list(map(bytes.fromhex, note["merkle_tree_path"]))
             ),
+            anchor=bytes.fromhex(note["merkle_tree_root"]),
         )
         key = (o_input.path(), o_input.value())
         if key not in resources:
@@ -196,9 +161,12 @@ def create_account_2_notes():
     tx.send()
 
 if __name__ == "__main__":
-    pprint(get_resources())
+    #pprint(get_resources())
     # from_the_beginning()
-
+    tx = gen_funding([("m/32h/1h/0h", 42000)])
+    #tx = Tx.load("funding_3570")
+    print(tx)
+    tx.prove()
     """
     txs = [Tx.load(x.name) for x in cases.CASES]
     for tx in txs:
