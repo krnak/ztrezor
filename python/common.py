@@ -38,23 +38,31 @@ def pk():
     return PK
 
 
+PATH_TO_ADDRESS = {
+    "m/44h/1h/0h/0/0": "tmQoJ3PTXgQLaRRZZYT6xk8XtjRbr2kCqwu",
+    "m/32h/1h/0h": "utest1gu6rg6hse8v0pd7mhgfn80v5vvdhuwn30wztyrczxsyj46ngpp2ryw36az6vlmlle8xns5k6pdlkgycr27naa2hpn3wspuvsxv0yzz62",
+    "m/32h/1h/2h": "utest1d5kpwc69vplme7sae0rjmc88599xxy03767yzpplessv72p3pf3e023lkhs8zxdxw3slvnj4xaf0u3sqp9qe7qf0vq0fcc2jpcr87cks",
+}
+
+
 def funding_to_output(f):
     amount = f[1]
     if f[0].startswith("m/44h"):
         return TxOutputType(
-            address_n=parse_path(f[0]),
+            address=PATH_TO_ADDRESS.get(f[0]),
             amount=amount,
             script_type=OutputScriptType.PAYTOADDRESS,
+        )
+    elif f[0].startswith("m/32h"):
+        return ZcashOrchardOutput(
+            address=PATH_TO_ADDRESS.get(f[0]),
+            amount=amount,
         )
     elif f[0].startswith("t"):
         return TxOutputType(
             address=f[0],
             amount=amount,
             script_type=OutputScriptType.PAYTOADDRESS,
-        )
-    elif f[0].startswith("m/32h"):
-        return ZcashOrchardOutput(
-            amount=amount,
         )
     elif f[0].startswith("u"):
         return ZcashOrchardOutput(

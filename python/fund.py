@@ -34,8 +34,6 @@ def gen_funding(required):
     foo = list(res.items())
     random.shuffle(foo)
     for k, v in foo:
-        if not k[0].startswith("m/44h"):
-            continue
         funding.append(k)
         required_total -= k[1]
         if required_total <= 0:
@@ -51,18 +49,6 @@ def gen_funding(required):
 
     tx.fund(res, add_change=True)
     return tx
-
-
-def sync_cmxs():
-    print("sync cmxs")
-    new_cmxs = getcmxs.sync()
-    print(f"{len(new_cmxs)} synced")
-
-
-def update_paths():
-    print("update paths")
-    subprocess.run(['/home/agi/code/ztrezor/client/target/debug/client'])
-
 
 def get_resources():
     utxos = zingo.notes()
@@ -117,21 +103,21 @@ def load(name):
     return Tx.load(name)
 
 def from_the_beginning():
-    txs = cases.CASES_2
+    txs = cases.CASES
     # txs = [Tx.load(x.name) for x in cases.CASES_2]
-    #required = [f for tx in txs for f in tx.funding]
-    #print(required)
-    #required = list(filter(lambda x: x[0] != "m/32h/1h/2h", required))
+    required = [f for tx in txs for f in tx.funding]
+    tx = gen_funding(required)
     #return
     #ftx = gen_funding(required)
     #ftx.sign()
     #ftx.prove()
     #ftx.send()
-    ftx = load("funding_8582")
-    ftx.wait_for()
+    # ftx = load("funding_8582")
+    # ftx.wait_for()
     #time.sleep(10)
     #sync_cmxs()
     #update_paths()
+    """
     res = get_resources()
     for tx in txs:
         tx.fund(res)
@@ -143,30 +129,15 @@ def from_the_beginning():
         tx.send()
     for tx in txs:
         tx.render()
-
-def create_account_2_notes():
-    tx = Tx(
-        name="create_account_2_notes",
-        funding=[("m/44h/1h/0h/0/0", 96970000)],
-        outputs=20 * [ZcashOrchardOutput(
-            address="utest1d5kpwc69vplme7sae0rjmc88599xxy03767yzpplessv72p3pf3e023lkhs8zxdxw3slvnj4xaf0u3sqp9qe7qf0vq0fcc2jpcr87cks",
-            amount=BASE,
-        )],
-        expect=None,
-    )
-    res = get_resources()
-    tx.fund(res, add_change=True)
-    tx.sign()
-    tx.prove()
-    tx.send()
+    """
 
 if __name__ == "__main__":
-    #pprint(get_resources())
-    # from_the_beginning()
-    tx = gen_funding([("m/32h/1h/0h", 42000)])
+    # pprint(get_resources())
+    from_the_beginning()
+    # tx = gen_funding([("m/32h/1h/0h", 42000)])
     #tx = Tx.load("funding_3570")
-    print(tx)
-    tx.prove()
+    # print(tx)
+    # tx.prove()
     """
     txs = [Tx.load(x.name) for x in cases.CASES]
     for tx in txs:

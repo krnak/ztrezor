@@ -6,8 +6,8 @@ def call(command):
     # print(command)
     result = subprocess.run(
         [
-            "/home/agi/jarys/zingolib/target/release/zingo-cli",
-            "--server", "127.0.0.1:9067",
+            "zingo-cli",
+            "--server", "https://testnet.lightwalletd.com:9067",
             *command,
         ],
         stdout=subprocess.PIPE,
@@ -18,7 +18,7 @@ def call(command):
     while "unspent_orchard_notes" not in result.stdout.decode():
         time.sleep(1)
         print("waiting for zingo notes")
-    result = result.stdout.decode().split("Lightclient connecting to http://127.0.0.1:9067/\n")[1]
+    result = result.stdout.decode().split("Lightclient connecting to https://testnet.lightwalletd.com:9067/\n")[1]
     result = "{\n" + result.split("\n}\n{\n")[1]
     # print(f"\n\n{ result } \n\n")
     return json.loads(result)
@@ -26,3 +26,7 @@ def call(command):
 
 def notes():
     return call(["notes"])
+
+
+if __name__ == "__main__":
+    print(notes())

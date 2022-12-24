@@ -87,7 +87,6 @@ CASES = [
         ],
         expect="gen",
     ),
-    # too many actions
     Tx(
         name="too_large_fee",
         funding=2*[("m/32h/1h/0h", BASE)],
@@ -96,9 +95,7 @@ CASES = [
             amount=BASE - FEE,
             memo="too large fee",
         )],
-        expect=[
-            "too large fee",
-        ],
+        expect="gen",
     ),
     Tx(
         name="send_to_account_2",
