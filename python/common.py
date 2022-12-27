@@ -74,7 +74,7 @@ def funding_to_output(f):
 
 
 def get_anchor():
-    with open("/home/agi/code/ztrezor/witnesses/anchor") as f:
+    with open("/home/agi/gh/jarys/ztrezor/witnesses/anchor") as f:
         anchor_hex = f.read()
         print(f"anchor: {anchor_hex}")
         anchor = bytes.fromhex(anchor_hex)

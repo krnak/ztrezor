@@ -1,35 +1,40 @@
 from hashlib import blake2b
 
 
-def gen(ti, to, oi, oo, ss):
-    rng = BundleShieldingRng(ss)
-    actions_count = 0 if len(oi) + len(oo) == 0 else max(2, len(oi), len(oo))
-
-    for i in range(len(ti)):
+def gen(tx):
+    if hasattr(tx, "shielding_seed"):
+        rng = BundleShieldingRng(tx.shielding_seed)
+    else:
+        print("!! 00..00 seed used !!")
+        rng = BundleShieldingRng(32 * b"\x00")
+    actions_count = 0 if len(tx.o_inputs()) + len(tx.o_outputs()) == 0 else max(2, len(tx.o_inputs()), len(tx.o_outputs()))
+    if len(tx.o_inputs()) > 8:
+        yield "ButtonRequest(code=B.Warning),"
+    for i in range(len(tx.t_inputs())):
         yield f"request_input({i}),"
 
-    for i in range(len(oi)):
+    for i in range(len(tx.o_inputs())):
         yield f"request_orchard_input({i}),"
 
-    for i, txo in enumerate(to):
+    for i, txo in enumerate(tx.t_outputs()):
         yield f"request_output({i}),"
+        if (txo.address is not None) or tx.o_inputs() or tx.o_outputs():  # shielded -> MISMATCH
+            yield "ButtonRequest(code=B.ConfirmOutput),"
+
+    for i, txo in enumerate(tx.o_outputs()):
+        yield f"request_orchard_output({i}),"
         if txo.address is not None:
             yield "ButtonRequest(code=B.ConfirmOutput),"
 
-    for i, txo in enumerate(oo):
-        yield f"request_orchard_output({i}),"
-        if txo.address is not None:
-            yield "ButtonRequest(code=B.ConfirmOutput)"
-
-    if len(oi) > 8:  # dust inputs
-        pass  #TODO
+    if len(tx.o_inputs()) > 8:  # dust inputs
+        pass  #tx.t_outputs()DO
 
     yield "ButtonRequest(code=B.SignTx),"
     if actions_count > 0:
         yield "request_no_op(),  # shielding seed"
 
-    oi_indices = pad(list(range(len(oi))), actions_count)
-    oo_indices = pad(list(range(len(oo))), actions_count)
+    oi_indices = pad(list(range(len(tx.o_inputs()))), actions_count)
+    oo_indices = pad(list(range(len(tx.o_outputs()))), actions_count)
     rng.shuffle_inputs(oi_indices)
     rng.shuffle_outputs(oo_indices)
 
@@ -40,11 +45,11 @@ def gen(ti, to, oi, oo, ss):
             yield f"request_orchard_output({k}),"
 
     returns = ""
-    for i in range(len(ti)):
+    for i in range(len(tx.t_inputs())):
         yield f"request_input({i}),{returns}"
         returns = f"  # t-signature {i}"
 
-    for i in range(len(to)):
+    for i in range(len(tx.t_outputs())):
         yield f"request_output({i}),{returns}"
         returns = ""
 

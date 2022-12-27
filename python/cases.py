@@ -19,19 +19,23 @@ ADDRESS = [
 ]
 
 CASES = [
-    Tx(
+    Tx.load("t2z") or Tx(
         name="t2z",
         funding=[("m/44h/1h/0h/0/0", BASE)],
         outputs=[ZcashOrchardOutput(amount=BASE - FEE)],
         expect="gen",
+        z_address_n=parse_path("m/32h/1h/0h"),
+        raises=False,
     ),
-    Tx(
+    Tx.load("z2z") or Tx(
         name="z2z",
         funding=[("m/32h/1h/0h", BASE)],
         outputs=[ZcashOrchardOutput(amount=BASE - FEE)],
         expect="gen",
+        z_address_n=parse_path("m/32h/1h/0h"),
+        raises=False,
     ),
-    Tx(
+    Tx.load("z2t") or Tx(
         name="z2t",
         outputs=[
             TxOutputType(
@@ -42,8 +46,10 @@ CASES = [
         ],
         funding=[("m/32h/1h/0h", BASE)],
         expect="gen",
+        z_address_n=parse_path("m/32h/1h/0h"),
+        raises=False,
     ),
-    Tx(
+    Tx.load("long_memo") or Tx(
         name="long_memo",
         funding=[("m/32h/1h/0h", BASE)],
         outputs=[ZcashOrchardOutput(
@@ -52,30 +58,10 @@ CASES = [
             memo="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Enim tortor at auctor urna nunc. Urna porttitor rhoncus dolor purus non enim praesent elementum facilisis. Amet purus gravida quis blandit turpis cursus in hac. Eu non diam phasellus vestibulum lorem sed risus. Pellentesque elit ullamcorper dignissim cras tincidunt. Egestas purus viverra accumsan in nisl nisi scelerisque eu ultrices. Morbi tincidunt ornare massa eget egestas purus.",
         )],
         expect="gen",
+        z_address_n=parse_path("m/32h/1h/0h"),
+        raises=False,
     ),
-    Tx(
-        name="too_long_memo",
-        funding=[("m/32h/1h/0h", BASE)],
-        outputs=[ZcashOrchardOutput(
-            address="utest1xt8k2akcdnncjfz8sfxkm49quc4w627skp3qpggkwp8c8ay3htftjf7tur9kftcw0w4vu4scwfg93ckfag84khy9k40yanl5k0qkanh9cyhddgws786qeqn37rtyf6rx4eflz09zk06",
-            amount=BASE - FEE,
-            memo="this memo hash 513 bytes this memo hash 513 bytes this memo hash 513 bytes this memo hash 513 bytes this memo hash 513 bytes this memo hash 513 bytes this memo hash 513 bytes this memo hash 513 bytes this memo hash 513 bytes this memo hash 513 bytes this memo hash 513 bytes this memo hash 513 bytes this memo hash 513 bytes this memo hash 513 bytes this memo hash 513 bytes this memo hash 513 bytes this memo hash 513 bytes this memo hash 513 bytes this memo hash 513 bytes this memo hash 513 bytes this memo has",
-        )],
-        expect="gen",
-    ),
-    Tx(
-        name="dust_inputs",
-        funding=12*[("m/32h/1h/0h", BASE)],
-        outputs=[
-            ZcashOrchardOutput(
-                address=ADDRESS[9],
-                amount=12*BASE - FEE,
-                memo="dust inputs",
-            )
-        ],
-        expect="gen",
-    ),
-    Tx(
+    Tx.load("big_bundle") or Tx(
         name="big_bundle",
         funding=8*[("m/32h/1h/0h", BASE)],
         outputs=[
@@ -86,8 +72,38 @@ CASES = [
             for i in range(8)
         ],
         expect="gen",
+        z_address_n=parse_path("m/32h/1h/0h"),
+        raises=False,
     ),
-    Tx(
+    Tx.load("dust_inputs") or Tx(
+        name="dust_inputs",
+        funding=12*[("m/32h/1h/0h", BASE)],
+        outputs=[
+            ZcashOrchardOutput(
+                address=ADDRESS[9],
+                amount=12*BASE - FEE,
+                memo="dust inputs",
+            )
+        ],
+        expect="gen",
+        z_address_n=parse_path("m/32h/1h/0h"),
+        raises=False,
+    ),
+    Tx.load("too_long_memo") or Tx(
+        name="too_long_memo",
+        funding=[("m/32h/1h/0h", BASE)],
+        outputs=[ZcashOrchardOutput(
+            address="utest1xt8k2akcdnncjfz8sfxkm49quc4w627skp3qpggkwp8c8ay3htftjf7tur9kftcw0w4vu4scwfg93ckfag84khy9k40yanl5k0qkanh9cyhddgws786qeqn37rtyf6rx4eflz09zk06",
+            amount=BASE - FEE,
+            memo="this memo hash 513 bytes this memo hash 513 bytes this memo hash 513 bytes this memo hash 513 bytes this memo hash 513 bytes this memo hash 513 bytes this memo hash 513 bytes this memo hash 513 bytes this memo hash 513 bytes this memo hash 513 bytes this memo hash 513 bytes this memo hash 513 bytes this memo hash 513 bytes this memo hash 513 bytes this memo hash 513 bytes this memo hash 513 bytes this memo hash 513 bytes this memo hash 513 bytes this memo hash 513 bytes this memo hash 513 bytes this memo has",
+        )],
+        expect="gen",
+        z_address_n=parse_path("m/32h/1h/0h"),
+        raises=True,
+        exception="ValueError",
+        exception_index=2,
+    ),
+    Tx.load("too_large_fee") or Tx(
         name="too_large_fee",
         funding=2*[("m/32h/1h/0h", BASE)],
         outputs=[ZcashOrchardOutput(
@@ -96,8 +112,15 @@ CASES = [
             memo="too large fee",
         )],
         expect="gen",
+        z_address_n=parse_path("m/32h/1h/0h"),
+        raises=True,
+        exception="TooLargeFee",
+        exception_index=4,
     ),
-    Tx(
+]
+
+ACCOUNT_2_CASES = [
+    Tx.load("send_to_account_2") or Tx(
         name="send_to_account_2",
         funding=[("m/32h/1h/0h", BASE)],
         outputs=[ZcashOrchardOutput(
@@ -106,8 +129,9 @@ CASES = [
             memo="from acount 0 to acount 2",
         )],
         expect="gen",
+        z_address_n=parse_path("m/32h/1h/0h"),
     ),
-    Tx(
+    Tx.load("send_from_account_2") or Tx(
         name="send_from_account_2",
         funding=[("m/32h/1h/2h", BASE)],
         outputs=[ZcashOrchardOutput(
@@ -117,5 +141,6 @@ CASES = [
         )],
         expect="gen",
         account=2,
+        z_address_n=parse_path("m/32h/1h/2h"),
     )
 ]

@@ -11,7 +11,7 @@ use std::io::{self, prelude::*, BufReader};
 
 fn main() -> io::Result<()> {
     let mut targets: HashSet<[u8; 32]> = HashSet::new();
-    let cmxs: Vec<String> = fs::read_dir("/home/agi/code/ztrezor/witnesses")
+    let cmxs: Vec<String> = fs::read_dir("/home/agi/gh/jarys/ztrezor/witnesses")
         .unwrap()
         .map(|path| {
             path.unwrap()
@@ -66,12 +66,12 @@ fn main() -> io::Result<()> {
     println!("{:?} cmxs processed", tree.current_position().unwrap());
     let root = tree.root(0).unwrap();
     println!("anchor: {}", hex::encode(&root.to_bytes()));
-    let mut file = File::create("/home/agi/code/ztrezor/witnesses/anchor")?;
+    let mut file = File::create("/home/agi/gh/jarys/ztrezor/witnesses/anchor")?;
     write!(file, "{}", hex::encode(&root.to_bytes()))?;
     println!("---");
     for (leaf, pos) in positions.into_iter() {
         let cmx = hex::encode(leaf.to_bytes());
-        let file = File::create(format!("/home/agi/code/ztrezor/witnesses/{}.json", cmx))?;
+        let file = File::create(format!("/home/agi/gh/jarys/ztrezor/witnesses/{}.json", cmx))?;
         let path: Vec<MerkleHashOrchard> = tree.authentication_path(pos, &root).expect("no path");
         let path = path
             .iter()

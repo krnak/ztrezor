@@ -14,7 +14,7 @@ incrementalmerkletree = "0.3"
 bech32 = "0.8"
 
 [dependencies.orchard]
-path = "/home/agi/code/orchard"
+path = "/home/agi/gh/jarys/orchard"
 #git = "https://github.com/jarys/orchard"
 #branch = "main"
 #default-features = false

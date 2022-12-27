@@ -18,6 +18,7 @@ def call(command):
     while "unspent_orchard_notes" not in result.stdout.decode():
         time.sleep(1)
         print("waiting for zingo notes")
+
     result = result.stdout.decode().split("Lightclient connecting to https://testnet.lightwalletd.com:9067/\n")[1]
     result = "{\n" + result.split("\n}\n{\n")[1]
     # print(f"\n\n{ result } \n\n")

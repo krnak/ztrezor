@@ -22,20 +22,8 @@ class OInput(TxInput):
     def as_trezor_input(self):
         return ZcashOrchardInput(**self.note)
 
-    def has_witness():
-        with open(f"/home/agi/code/ztrezor/notes/{self.cmx}.json", "r") as f:
-            pos, path = json.load(f)
-        return pos != 0
-
-    def get_witness(self):
-        with open(f"/home/agi/code/ztrezor/notes/{self.cmx}.json", "r") as f:
-            pos, path = json.load(f)
-        assert pos != 0
-        path = list(map(bytes.fromhex, path))
-        return (pos, path)
-
     def as_prover_input(self):
-        return OrchardInput(self.as_trezor_input(), self.get_witness())
+        return OrchardInput(self.as_trezor_input(), self.witness)
 
     def path(self):
         return f"m/32h/1h/{self.account}h"

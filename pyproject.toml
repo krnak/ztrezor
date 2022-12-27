@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "ztrezor"
+version = "0.1.0"
+description = "Tool for generating Trezor Zcash shielded transactions tests"
+authors = ["Tomas Krnak <tomas@krnak.cz>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+requests = "^2.28.1"
+pyyaml = "^6.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

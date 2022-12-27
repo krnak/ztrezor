@@ -6,7 +6,7 @@ from datetime import datetime
 import os
 from pprint import pprint
 from common import *
-import cases
+from cases import CASES
 from tx import Tx
 from py_trezor_orchard import *
 import api
@@ -67,6 +67,7 @@ def get_resources():
                 list(map(bytes.fromhex, note["merkle_tree_path"]))
             ),
             anchor=bytes.fromhex(note["merkle_tree_root"]),
+            cmx=note["note_cmx"],
         )
         key = (o_input.path(), o_input.value())
         if key not in resources:
@@ -91,10 +92,10 @@ def get_resources():
 
 
 def merge_rendered():
-    file = open("/home/agi/code/ztrezor/rendered/all.py", "w")
-    for filename in os.listdir("/home/agi/code/ztrezor/rendered"):
+    file = open("/home/agi/gh/jarys/ztrezor/rendered/all.py", "w")
+    for filename in os.listdir("/home/agi/gh/jarys/ztrezor/rendered"):
         if not filename.startswith("funding") and filename != "all.py":
-            with open(f"/home/agi/code/ztrezor/rendered/{filename}") as f:
+            with open(f"/home/agi/gh/jarys/ztrezor/rendered/{filename}") as f:
                 file.write(f.read())
                 file.write("\n\n")
     file.close()
@@ -103,33 +104,34 @@ def load(name):
     return Tx.load(name)
 
 def from_the_beginning():
-    txs = cases.CASES
+    # txs = cases.CASES
     # txs = [Tx.load(x.name) for x in cases.CASES_2]
-    required = [f for tx in txs for f in tx.funding]
-    tx = gen_funding(required)
+    # required = [f for tx in txs for f in tx.funding]
+    # tx = gen_funding(required)
     #return
     #ftx = gen_funding(required)
     #ftx.sign()
     #ftx.prove()
     #ftx.send()
-    # ftx = load("funding_8582")
-    # ftx.wait_for()
+    #ftx = load("funding_3862")
+    #ftx.prove()
+    #ftx.send()
     #time.sleep(10)
     #sync_cmxs()
     #update_paths()
-    """
-    res = get_resources()
-    for tx in txs:
-        tx.fund(res)
-    for tx in txs:
-        tx.sign()
-    for tx in txs:
-        tx.prove()
-    for tx in txs:
-        tx.send()
-    for tx in txs:
+    #"""
+    #res = get_resources()
+    #for tx in CASES:
+    #    tx.fund(res)
+    #for tx in CASES:
+    #    tx.sign()
+    #for tx in CASES:
+    #    tx.prove()
+    #for tx in CASES:
+    #    tx.send()
+    for tx in CASES:
         tx.render()
-    """
+    #"""
 
 if __name__ == "__main__":
     # pprint(get_resources())

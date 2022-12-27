@@ -10,11 +10,11 @@ edition = "2021"
 #zcash_client_sqlite = "0.3.0"
 #zcash_primitives = "0.6.0"
 
-zcash_client_backend = { path = "/home/agi/code/librustzcash/zcash_client_backend" }
-zcash_client_sqlite = { path = "/home/agi/code/librustzcash/zcash_client_sqlite" }
-zcash_primitives = { path = "/home/agi/code/librustzcash/zcash_primitives" }
+zcash_client_backend = { path = "/home/agi/gh/jarys/librustzcash/zcash_client_backend" }
+zcash_client_sqlite = { path = "/home/agi/gh/jarys/librustzcash/zcash_client_sqlite" }
+zcash_primitives = { path = "/home/agi/gh/jarys/librustzcash/zcash_primitives" }
 #orchard = "0.1.0"
-orchard = { path = "/home/agi/code/orchard" }
+orchard = { path = "/home/agi/gh/jarys/orchard" }
 incrementalmerkletree = "0.3"
 subtle = "2.3"
 hex = "0.4.3"

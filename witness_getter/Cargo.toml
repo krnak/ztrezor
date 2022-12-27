@@ -12,10 +12,10 @@ zcash_primitives = { git = "https://github.com/zingolabs/librustzcash", rev = "e
 futures = "0.3.23"
 
 [dependencies.zingolib]
-path = "/home/agi/code/zingolib/lib"
+path = "/home/agi/gh/jarys/zingolib/lib"
 
 [dependencies.zingoconfig]
-path = "/home/agi/code/zingolib/config"
+path = "/home/agi/gh/jarys/zingolib/config"
 
 [patch.crates-io]
 zcash_note_encryption = { git = "https://github.com/zingolabs/librustzcash", rev = "e5484c96445dbff38cfb4a6e0983ade1bc0d7656" }
