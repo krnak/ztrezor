@@ -15,15 +15,15 @@ We are glad to announce the submission of milestone M.3. This is what we've done
 - Trezor terminal client was extended to support getting viewing keys and shielded addresses.
 - Device tests for getting shielded addresses and viewing keys were added.
 - Device tests for signing shielded transactions (with test cases accepted by testnet) were added.
-- Signing protocol was documented and illustrated [[3][3]].
+- Signing protocol was documented and illustrated [[1][1]].
 
-At the moment, all new code related to shielded transactions is in the form of two pull requests [[1][1]],[[2][2]]. These PRs will be merged after merging some major UI and core Trezor firmware upgrades from the end 2022.
+At the moment, all new code related to shielded transactions is in the form of two pull requests [[2][2]],[[3][3]]. These PRs will be merged after merging some major UI and core Trezor firmware upgrades from the end 2022.
 
 This closes the work on Trezor firmware and starts work on Trezor Suite in M.4.
 
-[1]: https://github.com/trezor/trezor-firmware/pull/2510
-[2]: https://github.com/trezor/trezor-firmware/pull/2472
-[3]: https://github.com/jarys/ztrezor/blob/main/doc/implementation.md#sign-transaction-flow
+[1]: https://github.com/jarys/ztrezor/blob/main/doc/implementation.md#sign-transaction-flow
+[2]: https://github.com/trezor/trezor-firmware/pull/2510
+[3]: https://github.com/trezor/trezor-firmware/pull/2472
 
 # M.3 Detailed
 
