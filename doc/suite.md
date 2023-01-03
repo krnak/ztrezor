@@ -10,7 +10,7 @@ I guess that they can accessed from javascript via some FFI, but I have no exper
 
 Crate `zingolib` also offers a command line interface retrieving json objects. This interface can be run in an interactive (run `zingo-cli` and then enter commands) and non-interactive (run `zingo-cli <command>`) mode.
 
-![image](https://user-images.githubusercontent.com/15908613/210319150-29e9f117-8ac4-44a7-a772-79dae2981ea8.png)
+<img src="https://user-images.githubusercontent.com/15908613/210319150-29e9f117-8ac4-44a7-a772-79dae2981ea8.png" alt="" width="450"/>  
 
 ## Get Zcash address UI
 
