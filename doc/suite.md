@@ -16,6 +16,10 @@ Interactions between Trezor, Suite, `zingolib` and `trezor_orchard`:
 
 Transaction shielding on Trezor and proof computation can be parallelized (indicated by light blue in the illustration above). For more details see the [signing flow](https://github.com/jarys/ztrezor/blob/main/doc/implementation.md#sign-transaction-flow).
 
+Current state of these crates:
+- `zingolib` is missing watch-only mode. I will implement it.
+- `trezor_orchard` finished, but it is missing documentation 
+
 ## Trezor Connect requirements
 
 - [ ] add `ZcashGetViewingKey` request (see `trezorlib.zcash.get_viewing_key`)
@@ -47,16 +51,15 @@ Transaction shielding on Trezor and proof computation can be parallelized (indic
 
 - [ ] there is a new 'Zcash Shielded' account type
 
-#### Get Zcash address and viewing keys
+#### Get Zcash shielded address and viewing keys
 
 - [ ] Shielded addresses are always generated with a fresh index.
 - [ ] By default, the user gets a unified address containing an Orchard receiver.
-- [ ] _optional: User can request an orchard+transparent unified address_.
-
 - [ ] User can request a Full Viewing Key.
 - [ ] User can request an Incoming Viewing Key.
+- [ ] _optional: User can request an orchard+transparent unified address_.
 
-#### Send ZEC UI
+#### Send Zcash shielded transaction
 
 - [ ] Output address field accepts unified addresses and transparent addresses.
 - [ ] Suite is able to decode an unified address to get its receivers.
