@@ -1,5 +1,15 @@
 # Suite requirements
 
+## Solution architecture
+
+There are two component, which we will need to glued to Trezor Suite:
+- Rust crate [`zingolib`](https://github.com/zingolabs/zingolib) implements blockchain scanning.
+- Rust crate [`trezor_orchard`](https://github.com/jarys/trezor_orchard) implements proof generation.
+
+I guess that they can accessed from javascript via some FFI, but I have no experince with this.
+
+Crate `zingolib` also offers a command line interface retrieving json objects. This interface can be run in an interactive (run `zingo-cli` and then enter commands) and non-interactive (run `zingo-cli <command>`) mode.
+
 ## Get Zcash address UI
 
 - [ ] Addresses are always generated with fresh index
