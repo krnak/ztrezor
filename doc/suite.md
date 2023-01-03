@@ -16,6 +16,23 @@ Interactions between Trezor, Suite, `zingolib` and `trezor_orchard`:
 
 Transaction shielding on Trezor and proof computation can be paralelized (indicated by light blue in the illustration above). For more details see the [signing flow](https://github.com/jarys/ztrezor/blob/main/doc/implementation.md#sign-transaction-flow).
 
+## Trezor Connect requirements
+
+- [ ] add `ZcashGetViewingKey` request
+- [ ] add `ZcashGetAddress` request
+- [ ] extend `SignTx` flow according to the `trezorlib.zcash.sign_tx`
+
+## Suite requirements
+
+- [ ] there is a new 'Zcash Shielded' account type
+- [ ] Suite is able to request and cache Zcash Full Viewing Key via `ZcashGetViewingKey` request
+- [ ] Suite is able to request Orchard and unified addresses via `ZcashGetAddress` requests
+- [ ] 
+
+## `zingolib` requirements
+
+- [ ] Suite is able to create a new watch-only wallet by passing the Full Viewing Key to the `zingolib` FFI or `zingo-cli` command.
+
 ## Get Zcash address UI
 
 - [ ] Addresses are always generated with fresh index
