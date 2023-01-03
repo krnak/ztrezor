@@ -4,9 +4,9 @@
 
 There are two component, which we will need to glued to Trezor Suite:
 - Rust crate [`zingolib`](https://github.com/zingolabs/zingolib) implements blockchain scanning.
-- Rust crate [`trezor_orchard`](https://github.com/jarys/trezor_orchard) implements proof generation.
+- Rust crate [`trezor_orchard`](https://github.com/jarys/trezor_orchard) implements proof computation and shielding randomness synchronization.
 
-I guess that they can accessed from javascript via some FFI, but I have no experince with this.
+I guess that these crates can be accessed from javascript via some FFI, but I have no experience with this.
 
 Crate `zingolib` also offers a command line interface retrieving json objects. This interface can be run in an interactive (run `zingo-cli` and then enter commands) and non-interactive (run `zingo-cli <command>`) mode.
 
@@ -14,7 +14,7 @@ Interactions between Trezor, Suite, `zingolib` and `trezor_orchard`:
 
 <img src="https://user-images.githubusercontent.com/15908613/210319150-29e9f117-8ac4-44a7-a772-79dae2981ea8.png" alt="" width="450"/>
 
-Transaction shielding on Trezor and proof computation can be paralelized (indicated by light blue in the illustration above). For more details see the [signing flow](https://github.com/jarys/ztrezor/blob/main/doc/implementation.md#sign-transaction-flow).
+Transaction shielding on Trezor and proof computation can be parallelized (indicated by light blue in the illustration above). For more details see the [signing flow](https://github.com/jarys/ztrezor/blob/main/doc/implementation.md#sign-transaction-flow).
 
 ## Trezor Connect requirements
 
@@ -26,7 +26,7 @@ Transaction shielding on Trezor and proof computation can be paralelized (indica
 
 - [ ] Suite is able to request and cache Zcash Full Viewing Key via `ZcashGetViewingKey` message
 - [ ] Suite is able to request Orchard and unified addresses via `ZcashGetAddress` message
-- [ ] Suite is able to run `SignTx` protocol extented by Orchard parametrs and shielded inputs and outputs.
+- [ ] Suite is able to run `SignTx` protocol extended by Orchard parameters and shielded inputs and outputs.
 
 ## Suite <-> `zingolib` requirements
 
@@ -49,23 +49,23 @@ Transaction shielding on Trezor and proof computation can be paralelized (indica
 
 #### Get Zcash address and viewing keys
 
-- [ ] Shielded addresses are always generated with fresh index.
-- [ ] By default, user gets a unified address containing a Orchard receiver.
-- [ ] _optional: User can request a orchard+transparent unified address_.
+- [ ] Shielded addresses are always generated with a fresh index.
+- [ ] By default, the user gets a unified address containing an Orchard receiver.
+- [ ] _optional: User can request an orchard+transparent unified address_.
 
 - [ ] User can request a Full Viewing Key.
-- [ ] User can request a Incoming Viewing Key.
+- [ ] User can request an Incoming Viewing Key.
 
 #### Send ZEC UI
 
 - [ ] Output address field accepts unified addresses and transparent addresses.
 - [ ] Suite is able to decode an unified address to get its receivers.
-- [ ] If a unified address has Orchard receiver, then output is shielded.
-- [ ] If a unified address has not Orchard receiver, but it has some transparent receiver, then output is transparent.
-- [ ] If a unified address has no compatible receiver, address is rejected with some error message.
-- [ ] If user enters Sapling address, address is rejected with message "Sapling addresses not supported.".
+- [ ] If a unified address has an Orchard receiver, then output is shielded.
+- [ ] If a unified address has no Orchard receiver, but it has some transparent receiver, then output is transparent.
+- [ ] If a unified address has no compatible receiver, the address is rejected with some error message.
+- [ ] If a user enters a Sapling address, the address is rejected with the message "Sapling addresses not supported.".
 - [ ] If an output is shielded, then it has an additional _memo_ field. Memo is a message for a recipient.
-- [ ] Maximum length of memo is 512 bytes of utf8 encoded text. If user enters a longer memo, he gets an error message. 
+- [ ] Maximum length of memo is 512 bytes of utf8 encoded text. If a user enters a longer memo, he gets an error message.
 
 ## Servers
 
