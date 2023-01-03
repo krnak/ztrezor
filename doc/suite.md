@@ -20,36 +20,51 @@ Current state of these crates:
 - `zingolib` is missing watch-only mode. I will implement it.
 - `trezor_orchard` finished, but it is missing documentation 
 
-## Trezor Connect requirements
+## 1. Trezor Connect requirements
 
 - [ ] add `ZcashGetViewingKey` request (see `trezorlib.zcash.get_viewing_key`)
 - [ ] add `ZcashGetAddress` request (see `trezorlib.zcash.get_address`)
 - [ ] extend `SignTx` flow according to the `trezorlib.zcash.sign_tx`
 
-## Suite <-> Trezor requirements
+estimation: 3 md, this is about translating code written in python into typescript. `yield` used in `trezorlib.zcash.sign_tx` should be translated into some typescript asynchronous equivalent.
+
+## 2. Suite <-> Trezor requirements
 
 - [ ] Suite is able to request and cache Zcash Full Viewing Key via `ZcashGetViewingKey` message
 - [ ] Suite is able to request Orchard and unified addresses via `ZcashGetAddress` message
 - [ ] Suite is able to run `SignTx` protocol extended by Orchard parameters and shielded inputs and outputs.
+- [ ] Suite is able to send a raw transaction into the Zcash network.
 
-## Suite <-> `zingolib` requirements
+estimation:
+- 1 md, or for free. I'm not sure how much are Connect and Suite connected.
+- 2 md for sending transaction into a network. I use grpcurl command for that. There are many ways, how to send a raw transaction. You will have to choose some.
+
+## 3. Suite <-> `zingolib` requirements
 
 - [ ] Suite is able to create a new watch-only wallet by passing the Full Viewing Key to the `zingo-cli` command or `zingolib` FFI.
 - [ ] Suite is able to get spendable notes via `notes` `zingo-cli` command or `zingolib` FFI.
 - [ ] _optional: Suite is able to report wallet scanning progress._
 
-## Suite <-> `trezor_orchard` requirements
+estimation: I see three variants
+- 5 md for command line based version. This could be slow and unstable.
+- 12 md for FFI based version. `zingolib` functions are mostly asynchronous, so it can be hard to develop an appropriate FFI for them.
+- 3 md for daemon based version: In ideal case, `zingo-cli` could be run as a daemon, taking command requests end retrieving json objects. Unfortunately, this is not supported afaik. So it would mean 5 md from my side to implement it into `zingolib`.  
 
-- [ ] Suite is able to create a `Prover` instance via FFI
-- [ ] Suite is able to create a `ProvingKey` instance via FFI
+## 4. Suite <-> `trezor_orchard` requirements
+
+- [ ] Suite is able to create a `Prover` instance
+- [ ] Suite is able to create a `ProvingKey` instance
 - [ ] Suite is able to call `prove` method
 - [ ] Suite is able to call `prepaire` method
 - [ ] Suite is able to call `append_signatures` method
 - [ ] Suite is able to call `serialize` method
 
-## Suite GUI requirements
+estimation: 4 md, these methods and functions are not asynchronous.
+
+## 5. Suite GUI requirements
 
 - [ ] there is a new 'Zcash Shielded' account type
+- [ ] _optional: there is a new 'Zcash Testnet Shielded' account type_
 
 #### Get Zcash shielded address and viewing keys
 
@@ -70,6 +85,26 @@ Current state of these crates:
 - [ ] If an output is shielded, then it has an additional _memo_ field. Memo is a message for a recipient.
 - [ ] Maximum length of memo is 512 bytes of utf8 encoded text. If a user enters a longer memo, he gets an error message.
 
+estimation:
+- 1 md for new account type
+- 1 md for getting addresses and viewing keys
+- 7 md for transaction GUI. A difficulty could be in writing all these validation scripts and unified address decoding script.
+
+## 6. Tests
+
+- [ ] get_address tests
+- [ ] get_viewing_key test
+- [ ] sign_tx host side input validation tests
+- [ ] sign_tx Trezor tests
+- [ ] prove tx tests
+- [ ] blockchain scanning tests
+
+estimation: 15 md. possible difficulties
+- process of writting test includes repairing mistakes
+- blockchain scanning is slow due to the need to try to decrypt every utxo in the blockchain -> experimenting takes a time
+- proof computation is slow (aprox. 2 mins at stadard laptop) -> experimenting takes time
+- Since the environment already consists of 4 entities (Trezor, Suite, zingolib and prover) it could be chalenging to isolate their interactions. This might reqire to replace some of them by some mock components.
+
 ## Servers
 
 - [ ] _optional: SL should run Zcash full-node. I recommend using actively maintained pure rust [zebra](https://github.com/ZcashFoundation/zebra) full node._
@@ -80,6 +115,10 @@ https://mainnet.lightwalletd.com can be used instead.
 ## Autoshielding
 
 - [ ] _optional: Shielded account should be preffered. If user receives fund to a transparent address, there should be a simple way (some button or even an automated process) to resend these funds to his shielded account._
+
+## Total estimation
+
+36 md + communication + reserve
 
 ## Related links from 2022
 
