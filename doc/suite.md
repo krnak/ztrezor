@@ -18,60 +18,67 @@ Transaction shielding on Trezor and proof computation can be paralelized (indica
 
 ## Trezor Connect requirements
 
-- [ ] add `ZcashGetViewingKey` request
-- [ ] add `ZcashGetAddress` request
+- [ ] add `ZcashGetViewingKey` request (see `trezorlib.zcash.get_viewing_key`)
+- [ ] add `ZcashGetAddress` request (see `trezorlib.zcash.get_address`)
 - [ ] extend `SignTx` flow according to the `trezorlib.zcash.sign_tx`
 
-## Suite requirements
+## Suite <-> Trezor requirements
+
+- [ ] Suite is able to request and cache Zcash Full Viewing Key via `ZcashGetViewingKey` message
+- [ ] Suite is able to request Orchard and unified addresses via `ZcashGetAddress` message
+- [ ] Suite is able to run `SignTx` protocol extented by Orchard parametrs and shielded inputs and outputs.
+
+## Suite <-> `zingolib` requirements
+
+- [ ] Suite is able to create a new watch-only wallet by passing the Full Viewing Key to the `zingo-cli` command or `zingolib` FFI.
+- [ ] Suite is able to get spendable notes via `notes` `zingo-cli` command or `zingolib` FFI.
+- [ ] _optional: Suite is able to report wallet scanning progress._
+
+## Suite <-> `trezor_orchard` requirements
+
+- [ ] Suite is able to create a `Prover` instance via FFI
+- [ ] Suite is able to create a `ProvingKey` instance via FFI
+- [ ] Suite is able to call `prove` method
+- [ ] Suite is able to call `prepaire` method
+- [ ] Suite is able to call `append_signatures` method
+- [ ] Suite is able to call `serialize` method
+
+## Suite GUI requirements
 
 - [ ] there is a new 'Zcash Shielded' account type
-- [ ] Suite is able to request and cache Zcash Full Viewing Key via `ZcashGetViewingKey` request
-- [ ] Suite is able to request Orchard and unified addresses via `ZcashGetAddress` requests
-- [ ] 
 
-## `zingolib` requirements
+#### Get Zcash address and viewing keys
 
-- [ ] Suite is able to create a new watch-only wallet by passing the Full Viewing Key to the `zingolib` FFI or `zingo-cli` command.
+- [ ] Shielded addresses are always generated with fresh index.
+- [ ] By default, user gets a unified address containing a Orchard receiver.
+- [ ] _optional: User can request a orchard+transparent unified address_.
 
-## Get Zcash address UI
+- [ ] User can request a Full Viewing Key.
+- [ ] User can request a Incoming Viewing Key.
 
-- [ ] Addresses are always generated with fresh index
-- [ ] By default, user gets an unified address containing a transparent address and an Orchard shielded address
-- [ ] User can get a pure transparent address.
-- [ ] User can get a pure Orchard shielded address.
+#### Send ZEC UI
 
-
-## Send ZEC UI
-
-- [ ] Address field accepts unified address.
+- [ ] Output address field accepts unified addresses and transparent addresses.
 - [ ] Suite is able to decode an unified address to get its receivers.
 - [ ] If a unified address has Orchard receiver, then output is shielded.
 - [ ] If a unified address has not Orchard receiver, but it has some transparent receiver, then output is transparent.
 - [ ] If a unified address has no compatible receiver, address is rejected with some error message.
 - [ ] If user enters Sapling address, address is rejected with message "Sapling addresses not supported.".
-- [ ] If an output shielded, then it has an additional _memo_ field. Memo is a message for a recipient. Maximum length of memo is 512 bytes of utf8 encoded text.
+- [ ] If an output is shielded, then it has an additional _memo_ field. Memo is a message for a recipient.
+- [ ] Maximum length of memo is 512 bytes of utf8 encoded text. If user enters a longer memo, he gets an error message. 
 
 ## Servers
 
-- [ ] SL should run Zcash full-node. I recommend using actively maintained pure rust [zebra](https://github.com/ZcashFoundation/zebra) full node. 
-- [ ] SL should run a [lightwalletd](https://github.com/zcash/lightwalletd) full node backend.
+- [ ] _optional: SL should run Zcash full-node. I recommend using actively maintained pure rust [zebra](https://github.com/ZcashFoundation/zebra) full node._
+- [ ] _optional: SL should run a [lightwalletd](https://github.com/zcash/lightwalletd) full node backend._
 
-## Rust functionalities
-
-There will be a special Rust crate (`trezor_orchard`), which will enable a client to finish transaction authorization.
-
-- [ ] Suite must be able to use functionalities of `trezor_orchard` crate.
-- [ ] Unified address decoding can be imported from `librustzcash`.
-
-## Storage
-
-- [ ] Suite must be able to store all detected incoming shielded UTXOs. This requires circa 1kb per zUTXO.
+https://mainnet.lightwalletd.com can be used instead.
 
 ## Autoshielding
 
-TODO
+- [ ] _optional: Shielded account should be preffered. If user receives fund to a transparent address, there should be a simple way (some button or even an automated process) to resend these funds to his shielded account._
 
-## Related
+## Related links from 2022
 
 adityapk00 leaves zecwallet:
 https://forum.zcashcommunity.com/t/future-of-zecwallet/41681
